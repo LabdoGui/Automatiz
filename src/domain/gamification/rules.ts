@@ -156,3 +156,18 @@ export function consistentWeeks(activeDaysPerWeek: readonly number[]): number {
   }
   return streak;
 }
+
+/** Rótulos do histórico de XP (transparência: o usuário vê de onde veio cada ponto). */
+export const XP_KIND_LABEL: Record<XpKind, string> = {
+  ONBOARDING_DONE: "Perfil configurado",
+  PLAN_CREATED: "Plano semanal criado",
+  MEAL_COMPLETED: "Refeição do plano concluída",
+  MEAL_LOGGED: "Refeição registrada",
+  WORKOUT_COMPLETED: "Treino concluído",
+  SHOPPING_DONE: "Lista de compras finalizada",
+  WATER_GOAL: "Meta de água do dia",
+  HABIT_CHECK: "Hábito marcado",
+  PRICE_ADDED: "Preço cadastrado",
+  ACHIEVEMENT: "Conquista",
+  CHALLENGE: "Desafio concluído",
+};

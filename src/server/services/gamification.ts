@@ -105,7 +105,7 @@ export async function activeDates(userId: string, timeZone: string, since?: ISOD
       SELECT pm."date" AS day FROM "planned_meal" pm JOIN "meal_plan" mp ON mp.id = pm."planId"
         WHERE mp."userId" = ${userId} AND pm."completedAt" IS NOT NULL
       UNION SELECT "date" FROM "meal_log" WHERE "userId" = ${userId}
-      UNION SELECT ("startedAt" AT TIME ZONE ${timeZone})::date FROM "workout_session"
+      UNION SELECT (("startedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${timeZone})::date FROM "workout_session"
         WHERE "userId" = ${userId} AND status = 'COMPLETED'
       UNION SELECT "date" FROM "water_log" WHERE "userId" = ${userId}
       UNION SELECT hc."date" FROM "habit_check" hc JOIN "habit" h ON h.id = hc."habitId" WHERE h."userId" = ${userId}
@@ -135,8 +135,8 @@ export async function weekActivity(userId: string, weekStart: ISODate, timeZone:
     db.$queryRaw<{ n: bigint }[]>`
       SELECT count(*)::bigint AS n FROM "workout_session"
       WHERE "userId" = ${userId} AND status = 'COMPLETED'
-        AND ("startedAt" AT TIME ZONE ${timeZone})::date >= ${start}::date
-        AND ("startedAt" AT TIME ZONE ${timeZone})::date < ${end}::date`,
+        AND (("startedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${timeZone})::date >= ${start}::date
+        AND (("startedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${timeZone})::date < ${end}::date`,
     db.plannedMeal.count({ where: { plan: { userId }, completedAt: { not: null }, date: { gte: start, lt: end } } }),
     db.habitCheck.count({ where: { habit: { userId }, date: { gte: start, lt: end } } }),
     db.shoppingList.findMany({
@@ -290,6 +290,51 @@ export async function resumeChallenge(userId: string, userChallengeId: string) {
 
 export async function levelInfo(userId: string) {
   return levelFromXp(await currentXp(userId));
+}
+
+/** Histórico de XP (mais recente primeiro) e total de eventos. */
+export async function xpHistory(userId: string, take = 20) {
+  const [events, total] = await Promise.all([
+    db.xpEvent.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take,
+      select: { id: true, kind: true, amount: true, refId: true, createdAt: true },
+    }),
+    db.xpEvent.count({ where: { userId } }),
+  ]);
+  return { events, total };
+}
+
+/** XP ganho a partir de uma data local (inclusive), no fuso do usuário. */
+export async function xpSince(userId: string, since: ISODate, timeZone: string): Promise<number> {
+  const rows = await db.$queryRaw<{ xp: bigint | null }[]>`
+    SELECT sum(amount)::bigint AS xp FROM "xp_event"
+    WHERE "userId" = ${userId}
+      AND (("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE ${timeZone})::date >= ${toDbDate(since)}::date`;
+  return Number(rows[0]?.xp ?? 0);
+}
+
+/** Catálogo de desafios com a participação do usuário na semana. */
+export async function weekChallenges(userId: string, weekStart: ISODate) {
+  const [catalog, mine] = await Promise.all([
+    db.challenge.findMany({ orderBy: { position: "asc" } }),
+    db.userChallenge.findMany({ where: { userId, weekStart: toDbDate(weekStart) } }),
+  ]);
+  const byChallenge = new Map(mine.map((m) => [m.challengeId, m]));
+  return catalog.map((challenge) => ({ challenge, mine: byChallenge.get(challenge.id) ?? null }));
+}
+
+export async function unlockedAchievements(userId: string) {
+  return db.userAchievement.findMany({
+    where: { userId },
+    select: { unlockedAt: true, achievement: { select: { code: true, title: true, xp: true } } },
+    orderBy: { unlockedAt: "desc" },
+  });
+}
+
+export async function completedChallengesCount(userId: string): Promise<number> {
+  return db.userChallenge.count({ where: { userId, status: "COMPLETED" } });
 }
 
 export { CHALLENGES };

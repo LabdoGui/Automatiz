@@ -122,9 +122,9 @@ export interface Series {
 
 export async function workoutsPerWeek(userId: string, from: ISODate, to: ISODate, timeZone: string) {
   const rows = await db.$queryRaw<{ day: Date }[]>`
-    SELECT ("startedAt" AT TIME ZONE ${timeZone})::date AS day FROM "workout_session"
+    SELECT (("startedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${timeZone})::date AS day FROM "workout_session"
     WHERE "userId" = ${userId} AND status = 'COMPLETED'
-      AND ("startedAt" AT TIME ZONE ${timeZone})::date BETWEEN ${toDbDate(from)}::date AND ${toDbDate(to)}::date`;
+      AND (("startedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${timeZone})::date BETWEEN ${toDbDate(from)}::date AND ${toDbDate(to)}::date`;
   const weeks = new Map<ISODate, number>();
   for (let w = startOfWeek(from); w <= to; w = addDays(w, 7)) weeks.set(w, 0);
   for (const r of rows) {

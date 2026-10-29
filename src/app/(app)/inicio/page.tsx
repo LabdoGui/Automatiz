@@ -3,6 +3,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   BedDouble,
+  Bell,
+  Droplets,
   CalendarPlus,
   Dumbbell,
   Flag,
@@ -13,11 +15,12 @@ import {
   Trophy,
   Utensils,
 } from "lucide-react";
-import { localTime, startOfWeek, timeToMinutes, toDbDate, weekdayIndex, WEEKDAY_LONG } from "@/domain/dates";
-import { formatBRL, formatDateLong, formatInt } from "@/domain/format";
+import { localDate, localTime, startOfWeek, timeToMinutes, toDbDate, weekdayIndex, WEEKDAY_LONG } from "@/domain/dates";
+import { formatBRL, formatDateLong, formatDec, formatInt } from "@/domain/format";
 import { goalProgress, mealTotals, roundTotals, sumTotals } from "@/domain/nutrition/calc";
 import { MEAL_TYPE_LABEL } from "@/domain/planner/meal-types";
 import { ACHIEVEMENTS, levelFromXp, mascotForLevel } from "@/domain/gamification/rules";
+import { buildReminders, type Reminder } from "@/domain/gamification/reminders";
 import { Mascot } from "@/components/brand/mascot";
 import { LinkButton } from "@/components/ui/button";
 import { Meter } from "@/components/ui/meter";
@@ -55,7 +58,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const weekStart = startOfWeek(today);
   const { bemvindo } = await searchParams;
 
-  const [plan, ctx, logs, routine, session, water, list, challenges, unlocked, stats, streak] = await Promise.all([
+  const [plan, ctx, logs, routine, session, water, list, challenges, unlocked, stats, streak, lastWorkout] = await Promise.all([
     getActivePlan(user.id, weekStart),
     plannerContext(user.id),
     dayLogs(user.id, today),
@@ -67,6 +70,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     db.userAchievement.findMany({ where: { userId: user.id }, include: { achievement: true }, orderBy: { unlockedAt: "desc" } }),
     computeStats(user.id, tz),
     consistencyStreak(user.id, tz, today),
+    db.workoutSession.findFirst({ where: { userId: user.id, status: "COMPLETED" }, orderBy: { startedAt: "desc" }, select: { startedAt: true } }),
   ]);
 
   const todayMeals = plan?.meals.filter((m) => m.date.toISOString().slice(0, 10) === today) ?? [];
@@ -92,6 +96,24 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     .map((a) => ({ a, p: a.progress(stats) }))
     .sort((x, y) => y.p.current / y.p.target - x.p.current / x.p.target)[0];
   const activeChallenges = challenges.filter((c) => c.status !== "COMPLETED" || c.completedAt);
+  const reminders = settings
+    ? buildReminders({
+        now,
+        prefs: settings,
+        pendingMeals: pending.map((m) => ({ id: m.id, label: MEAL_TYPE_LABEL[m.mealType], time: m.time })),
+        water: profile.trackWater && profile.waterGoalMl ? { totalMl: water, goalMl: profile.waterGoalMl } : null,
+        workout: todaysWorkout
+          ? {
+              label: todaysWorkout.label,
+              name: todaysWorkout.name,
+              doneToday: lastWorkout ? localDate(lastWorkout.startedAt, tz) === today : false,
+              inProgress: Boolean(session),
+            }
+          : null,
+        challenges: challenges.map((c) => ({ id: c.id, title: c.challenge.title, progress: c.progress, target: c.challenge.target, status: c.status })),
+        daysLeftInWeek: 7 - weekday,
+      })
+    : [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -129,6 +151,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </span>
         </Link>
       </header>
+
+      {reminders.length > 0 && <Reminders items={reminders} />}
 
       {/* Próxima refeição */}
       <section aria-labelledby="proxima">
@@ -213,7 +237,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
                 <p>Sem meta definida — acompanhe só o que ajuda você.</p>
               )}
               <p className="mt-2 tabular">
-                P {consumed.values.proteinG} g · C {consumed.values.carbsG} g · G {consumed.values.fatG} g
+                P {formatDec(consumed.values.proteinG)} g · C {formatDec(consumed.values.carbsG)} g · G {formatDec(consumed.values.fatG)} g
               </p>
               {consumed.incomplete.length > 0 && <p className="mt-1 text-xs text-amber-text">Alguns valores estão incompletos na fonte.</p>}
             </div>
@@ -456,5 +480,39 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         </div>
       </section>
     </div>
+  );
+}
+
+const REMINDER_ICON: Record<Reminder["kind"], typeof Bell> = {
+  meal: Utensils,
+  water: Droplets,
+  workout: Dumbbell,
+  challenge: Flag,
+};
+
+function Reminders({ items }: { items: Reminder[] }) {
+  return (
+    <section aria-labelledby="lembretes" className="-mt-2">
+      <h2 id="lembretes" className="mb-2 flex items-center gap-1.5 text-xs font-bold tracking-[0.14em] text-ink-3 uppercase">
+        <Bell className="h-3.5 w-3.5" aria-hidden /> Lembretes
+      </h2>
+      <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-surface">
+        {items.map((r) => {
+          const Icon = REMINDER_ICON[r.kind];
+          return (
+            <li key={r.key}>
+              <Link href={r.href} className="flex min-h-12 items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface-2">
+                <Icon className="h-4 w-4 shrink-0 text-lime-text" aria-hidden />
+                <span className="min-w-0 flex-1">{r.text}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-1.5 text-xs text-ink-3">
+        Ajuste em <Link href="/perfil#configuracoes" className="underline">Perfil → Aparência e avisos</Link>.
+      </p>
+    </section>
   );
 }
