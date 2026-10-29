@@ -20,7 +20,7 @@ import {
 } from "@/lib/validation";
 
 const oneOf = <T extends string>(values: readonly T[], message: string) =>
-  z.string().refine((v): v is T => (values as readonly string[]).includes(v), message);
+  z.preprocess((v) => (typeof v === "string" ? v : ""), z.string().refine((v): v is T => (values as readonly string[]).includes(v), message));
 
 const tagsIn = (allowed: readonly string[], max = 30) =>
   zStringArray(max).refine((arr) => arr.every((t) => allowed.includes(t)), "Opção inválida.");
@@ -36,18 +36,8 @@ export const zFreeList = z.preprocess(
   z.array(z.string().max(40, "Cada item deve ter até 40 caracteres.")).max(20, "Use no máximo 20 itens."),
 );
 
-export const STEP_KEYS = [
-  "perfil",
-  "objetivo",
-  "rotina",
-  "refeicoes",
-  "gostos",
-  "restricoes",
-  "orcamento",
-  "meta",
-  "despensa",
-] as const;
-export type StepKey = (typeof STEP_KEYS)[number];
+import { STEP_KEYS, type StepKey } from "./step-keys";
+export { STEP_KEYS, type StepKey };
 
 export const perfilSchema = z.object({
   displayName: zRequiredText("como prefere ser chamado(a)", 40),

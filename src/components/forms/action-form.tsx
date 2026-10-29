@@ -28,7 +28,7 @@ export function useFormPending(): boolean {
   return useContext(FormPendingContext);
 }
 
-type Action<T> = (state: ActionState<T>, formData: FormData) => Promise<ActionResult<T>>;
+type Action<T> = (state: unknown, formData: FormData) => Promise<ActionResult<T>>;
 
 /**
  * Formulário ligado a uma Server Action:

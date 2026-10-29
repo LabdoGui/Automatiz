@@ -9,17 +9,19 @@ export type UiMotion = "on" | "off";
 
 export const THEME_COOKIE = "viva-theme";
 export const MOTION_COOKIE = "viva-motion";
+export const CELEBRATE_COOKIE = "viva-celebrate";
 
 interface CookieReader {
   get(name: string): { value: string } | undefined;
 }
 
-export function readUiPrefs(store: CookieReader): { theme: UiTheme; motion: UiMotion } {
+export function readUiPrefs(store: CookieReader): { theme: UiTheme; motion: UiMotion; celebrate: boolean } {
   const t = store.get(THEME_COOKIE)?.value;
   const m = store.get(MOTION_COOKIE)?.value;
   return {
     theme: t === "light" || t === "system" ? t : "dark",
     motion: m === "off" ? "off" : "on",
+    celebrate: store.get(CELEBRATE_COOKIE)?.value !== "off",
   };
 }
 

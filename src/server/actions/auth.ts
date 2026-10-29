@@ -5,14 +5,14 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { isAPIError } from "better-auth/api";
-import type { ActionResult, ActionState } from "@/lib/action-types";
+import type { ActionResult } from "@/lib/action-types";
 import { zBool } from "@/lib/validation";
 import { auth } from "../auth";
 import { db } from "../db";
 import { parseInput, safeAction, UserFacingError } from "../action-utils";
 import { consumeRateLimit } from "../rate-limit";
 import { recordConsents } from "../services/account";
-import { MOTION_COOKIE, THEME_COOKIE, UI_COOKIE_OPTIONS, themeFromSetting } from "../ui-prefs";
+import { CELEBRATE_COOKIE, MOTION_COOKIE, THEME_COOKIE, UI_COOKIE_OPTIONS, themeFromSetting } from "../ui-prefs";
 import { getCurrentUser } from "../session";
 
 const emailSchema = z.string().trim().toLowerCase().email("Informe um e-mail válido.").max(254);
@@ -54,9 +54,10 @@ async function applyUiCookies(userId: string) {
   const store = await cookies();
   store.set(THEME_COOKIE, themeFromSetting(settings?.theme ?? "DARK"), UI_COOKIE_OPTIONS);
   store.set(MOTION_COOKIE, settings?.animations === false ? "off" : "on", UI_COOKIE_OPTIONS);
+  store.set(CELEBRATE_COOKIE, settings?.celebrations === false ? "off" : "on", UI_COOKIE_OPTIONS);
 }
 
-export async function signUpAction(_prev: ActionState, formData: FormData): Promise<ActionResult> {
+export async function signUpAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
   let ok = false;
   const result = await safeAction(async () => {
     const parsed = parseInput(signUpSchema, formData);
@@ -89,7 +90,7 @@ export async function signUpAction(_prev: ActionState, formData: FormData): Prom
   return result;
 }
 
-export async function signInAction(_prev: ActionState, formData: FormData): Promise<ActionResult> {
+export async function signInAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
   let target: string | null = null;
   const result = await safeAction(async () => {
     const parsed = parseInput(signInSchema, formData);
@@ -126,7 +127,7 @@ const deleteSchema = z.object({
 });
 
 /** Exclusão definitiva da conta e de todos os dados (cascata no banco). */
-export async function deleteAccountAction(_prev: ActionState, formData: FormData): Promise<ActionResult> {
+export async function deleteAccountAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
   let deleted = false;
   const result = await safeAction(async () => {
     const user = await getCurrentUser();

@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { localDate, type ISODate } from "@/domain/dates";
 import { auth } from "./auth";
 import { db } from "./db";
 
@@ -47,4 +48,10 @@ export async function requireOnboardedUser() {
 
 export function userTimezone(settings: { timezone: string } | null | undefined): string {
   return settings?.timezone ?? "America/Sao_Paulo";
+}
+
+/** Fuso e data de hoje do usuário. */
+export function clockFor(settings: { timezone: string } | null | undefined): { tz: string; today: ISODate } {
+  const tz = userTimezone(settings);
+  return { tz, today: localDate(new Date(), tz) };
 }

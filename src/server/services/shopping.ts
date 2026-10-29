@@ -204,6 +204,11 @@ export async function setPurchased(userId: string, itemId: string, purchased: bo
       await db.priceRecord.create({
         data: { userId, productId: item.productId, priceCents: unit, observedAt: toDbDate(today), source: "PAID", storeName: item.priceStore },
       });
+      // O valor pago é o dado mais confiável: passa a ser o preço do item.
+      await db.shoppingListItem.update({
+        where: { id: item.id },
+        data: { unitPriceCents: unit, priceSource: "PAID", priceDate: toDbDate(today) },
+      });
     }
   }
   return item;

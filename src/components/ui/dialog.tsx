@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useId, useRef, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { buttonClasses, type ButtonSize, type ButtonVariant } from "./button";
 import { cn } from "./cn";
@@ -29,7 +29,6 @@ export function Dialog({
   triggerLabel,
   children,
   wide = false,
-  defaultOpen = false,
 }: {
   title: string;
   description?: ReactNode;
@@ -41,7 +40,6 @@ export function Dialog({
   triggerLabel?: string;
   children: ReactNode;
   wide?: boolean;
-  defaultOpen?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
@@ -54,10 +52,6 @@ export function Dialog({
   const close = useCallback(() => {
     ref.current?.close();
   }, []);
-
-  useEffect(() => {
-    if (defaultOpen) show();
-  }, [defaultOpen, show]);
 
   return (
     <>

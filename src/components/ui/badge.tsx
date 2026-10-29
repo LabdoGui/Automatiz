@@ -18,17 +18,21 @@ export function Badge({
   children,
   className,
   title,
+  wrap = false,
 }: {
   tone?: BadgeTone;
   children: ReactNode;
   className?: string;
   title?: string;
+  /** Permite quebra de linha (textos longos em telas pequenas) */
+  wrap?: boolean;
 }) {
   return (
     <span
       title={title}
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold leading-5 whitespace-nowrap",
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold leading-5",
+        wrap ? "max-w-full rounded-xl" : "whitespace-nowrap",
         TONES[tone],
         className,
       )}

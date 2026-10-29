@@ -607,3 +607,59 @@ export async function history(userId: string, from: ISODate, to: ISODate) {
   ]);
   return { meals, logs };
 }
+
+// ─────────────────────────────────────────────────────────────
+// Custos estimados (preços informados pelo usuário)
+// ─────────────────────────────────────────────────────────────
+
+export function mealCost(
+  items: readonly { grams: number; food: { id: string; purchaseFoodId: string | null; purchaseFactor: number | null } }[],
+  prices: ReadonlyMap<string, { perGramCents: number }>,
+): { cents: number; complete: boolean; priced: boolean } {
+  let cents = 0;
+  let missing = 0;
+  for (const item of items) {
+    const p = prices.get(item.food.purchaseFoodId ?? item.food.id);
+    if (!p) {
+      missing += 1;
+      continue;
+    }
+    const factor = item.food.purchaseFoodId && item.food.purchaseFactor ? item.food.purchaseFactor : 1;
+    cents += p.perGramCents * item.grams * factor;
+  }
+  return { cents: Math.round(cents), complete: missing === 0, priced: items.length - missing > 0 };
+}
+
+/** Opções de substituição para todos os itens de uma refeição (consultas compartilhadas). */
+export async function mealSubstitutions(userId: string, items: readonly { id: string; grams: number; food: FoodRecord }[]) {
+  const groups = [...new Set(items.map((i) => i.food.substitutionGroup).filter(Boolean))] as string[];
+  if (groups.length === 0) return new Map<string, ReturnType<typeof substitutionOptions>>();
+  const [ctx, candidates, prices] = await Promise.all([
+    plannerContext(userId),
+    db.food.findMany({
+      where: { substitutionGroup: { in: groups }, allergenReviewed: true, OR: [{ ownerId: null }, { ownerId: userId }] },
+      select: FOOD_SELECT,
+    }),
+    priceIndexByFood(userId),
+  ]);
+  const costPerGram = (f: { id: string; purchaseFoodId: string | null; purchaseFactor: number | null }) => {
+    const p = prices.get(f.purchaseFoodId ?? f.id);
+    return p ? p.perGramCents * (f.purchaseFoodId && f.purchaseFactor ? f.purchaseFactor : 1) : null;
+  };
+  const result = new Map<string, ReturnType<typeof substitutionOptions>>();
+  for (const item of items) {
+    if (!item.food.substitutionGroup) continue;
+    result.set(
+      item.id,
+      substitutionOptions({
+        from: toSubFood(item.food),
+        grams: item.grams,
+        candidates: candidates.filter((c) => c.substitutionGroup === item.food.substitutionGroup).map(toSubFood),
+        rules: ctx.rules,
+        costPerGram,
+        limit: 8,
+      }),
+    );
+  }
+  return result;
+}

@@ -166,6 +166,9 @@ export async function saveStep(params: {
           waterGoalMl: d.trackWater ? (d.waterGoalMl ?? 2000) : null,
         },
       });
+      if (d.hasNutritionist === "no") {
+        await db.nutritionGoal.updateMany({ where: { userId, active: true, source: "PROFESSIONAL" }, data: { active: false } });
+      }
       if (d.hasNutritionist === "yes" && (d.kcal !== undefined || d.proteinG !== undefined || d.carbsG !== undefined || d.fatG !== undefined)) {
         await saveGoal(userId, {
           source: "PROFESSIONAL",

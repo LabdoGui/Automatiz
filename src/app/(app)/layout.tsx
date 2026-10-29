@@ -2,12 +2,11 @@ import Link from "next/link";
 import { ShoppingBasket, Sparkles } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { BottomNav, SideNav } from "@/components/shell/nav";
-import { FeedbackProvider } from "@/components/ui/feedback";
 import { levelFromXp } from "@/domain/gamification/rules";
 import { requireOnboardedUser } from "@/server/session";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { profile, settings } = await requireOnboardedUser();
+  const { profile } = await requireOnboardedUser();
   const level = levelFromXp(profile.xpTotal);
 
   const levelChip = (
@@ -24,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <FeedbackProvider celebrations={settings?.celebrations ?? true}>
+    <>
       <div className="mx-auto flex min-h-dvh max-w-[1400px]">
         <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-8 border-r border-line px-4 py-6 lg:flex">
           <Link href="/inicio" className="px-3.5" aria-label="VIVA — início">
@@ -64,6 +63,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </div>
       <BottomNav />
-    </FeedbackProvider>
+    </>
   );
 }

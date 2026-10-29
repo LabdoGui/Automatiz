@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { Mascot } from "@/components/brand/mascot";
-import { FeedbackProvider } from "@/components/ui/feedback";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <FeedbackProvider>
       <div className="grid min-h-dvh lg:grid-cols-[1fr_1.1fr]">
         <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-raised p-10 lg:flex">
           <Link href="/" aria-label="Página inicial do VIVA">
@@ -28,6 +26,5 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto my-auto w-full max-w-md animate-rise py-6">{children}</div>
         </main>
       </div>
-    </FeedbackProvider>
   );
 }

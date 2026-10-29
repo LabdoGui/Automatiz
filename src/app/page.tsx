@@ -80,17 +80,17 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           </div>
 
           <div className="relative mx-auto grid aspect-square w-full max-w-md place-items-center">
-            <div aria-hidden className="absolute inset-6 rounded-full bg-lime/10 blur-3xl" />
+            <div aria-hidden className="pointer-events-none absolute inset-6 rounded-full bg-lime/10 blur-3xl" />
             <div aria-hidden className="grain absolute inset-0 rounded-[3rem] border border-line bg-surface/60" />
             <div className="relative flex flex-col items-center gap-2">
               <Mascot stage="planta" size={220} />
               <p className="font-display text-sm font-bold text-ink-2">Este é o Broto. Ele cresce com a sua constância.</p>
             </div>
-            <div aria-hidden className="absolute -top-2 -right-1 rotate-3 rounded-2xl bg-lime px-4 py-3 text-lime-ink shadow-lift sm:-right-6">
+            <div aria-hidden className="pointer-events-none absolute -top-2 -right-1 rotate-3 rounded-2xl bg-lime px-4 py-3 text-lime-ink shadow-lift sm:-right-6">
               <p className="text-[0.7rem] font-bold uppercase tracking-wider">Exemplo · compras</p>
               <p className="font-display text-xl font-extrabold">Lista da semana</p>
             </div>
-            <div aria-hidden className="absolute top-12 -left-1 -rotate-3 rounded-2xl border border-line-strong bg-surface-2 px-4 py-3 shadow-lift sm:-left-6">
+            <div aria-hidden className="pointer-events-none absolute top-12 -left-1 -rotate-3 rounded-2xl border border-line-strong bg-surface-2 px-4 py-3 shadow-lift sm:-left-6">
               <p className="text-[0.7rem] font-bold uppercase tracking-wider text-ink-3">Exemplo · treino B</p>
               <p className="font-display text-xl font-extrabold">Costas e bíceps</p>
             </div>
