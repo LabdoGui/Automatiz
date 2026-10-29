@@ -28,7 +28,7 @@ export const zInt = (min: number, max: number, label = "o valor") =>
   z.preprocess(
     (v) => (typeof v === "string" ? (v.trim() === "" ? undefined : Number(v.replace(",", "."))) : v),
     z
-      .number({ error: `Informe ${label}.` })
+      .number({ error: (iss) => (iss.input === undefined ? `Informe ${label}.` : `Valor inválido para ${label}.`) })
       .int(`Use um número inteiro para ${label}.`)
       .min(min, `O mínimo para ${label} é ${min}.`)
       .max(max, `O máximo para ${label} é ${max}.`),
@@ -41,7 +41,7 @@ export const zDecimal = (min: number, max: number, label = "o valor") =>
   z.preprocess(
     (v) => (typeof v === "string" ? (v.trim() === "" ? undefined : (parseDecimal(v) ?? Number.NaN)) : v),
     z
-      .number({ error: `Informe ${label}.` })
+      .number({ error: (iss) => (iss.input === undefined ? `Informe ${label}.` : `Valor inválido para ${label}.`) })
       .refine((n) => Number.isFinite(n), `Valor inválido para ${label}.`)
       .refine((n) => n >= min, `O mínimo para ${label} é ${min}.`)
       .refine((n) => n <= max, `O máximo para ${label} é ${max}.`),
@@ -55,9 +55,10 @@ export const zMoneyCents = (label = "o valor", maxCents = 10_000_000) =>
   z.preprocess(
     (v) => (typeof v === "string" ? (v.trim() === "" ? undefined : (parseBRLToCents(v) ?? Number.NaN)) : v),
     z
-      .number({ error: `Informe ${label}.` })
+      .number({
+        error: (iss) => (iss.input === undefined ? `Informe ${label}.` : `Valor inválido para ${label}. Use o formato 12,90.`),
+      })
       .int()
-      .refine((n) => Number.isFinite(n), `Valor inválido para ${label}. Use o formato 12,90.`)
       .refine((n) => n >= 0, `${label} não pode ser negativo.`)
       .refine((n) => n <= maxCents, `${label} parece alto demais.`),
   );
