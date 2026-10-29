@@ -74,7 +74,9 @@ export function ActionForm<T>({
       if (resetOnSuccess) formRef.current?.reset();
       if (closeDialogOnSuccess) dialog?.close();
       onSuccess?.(state);
-      if (redirectTo) router.push(redirectTo);
+      const dynamicTarget = (state.data as { redirectTo?: unknown } | undefined)?.redirectTo;
+      if (typeof dynamicTarget === "string" && dynamicTarget.startsWith("/")) router.push(dynamicTarget);
+      else if (redirectTo) router.push(redirectTo);
     } else if (!state.fieldErrors || Object.keys(state.fieldErrors).length === 0) {
       toast(state.error, "error");
     } else {

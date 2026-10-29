@@ -53,7 +53,7 @@ export default function PrivacyPage() {
 
         <section aria-labelledby="dados">
           <h2 id="dados">O que guardamos e por quê</h2>
-          <div className="overflow-x-auto rounded-2xl border border-line">
+          <div className="relative overflow-x-auto rounded-2xl border border-line">
             <table className="w-full min-w-[34rem] text-left text-sm">
               <thead className="bg-surface-2 text-ink">
                 <tr>

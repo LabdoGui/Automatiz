@@ -98,7 +98,7 @@ export default async function MealPage({ params }: { params: Promise<{ id: strin
         </FormMessage>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_19rem]">
+      <div className="grid gap-8 lg:grid-cols-[1fr_19rem] [&>*]:min-w-0">
         <div className="min-w-0">
           <section aria-labelledby="ingredientes">
             <SectionTitle id="ingredientes">Ingredientes</SectionTitle>
@@ -372,7 +372,7 @@ export default async function MealPage({ params }: { params: Promise<{ id: strin
               triggerVariant="danger"
               triggerSize="sm"
             >
-              <ActionForm action={deleteMealAction} redirectTo={`/alimentacao?dia=${date}`}>
+              <ActionForm action={deleteMealAction}>
                 <input type="hidden" name="mealId" value={meal.id} />
                 <SubmitButton variant="danger" block>
                   Sim, remover refeição

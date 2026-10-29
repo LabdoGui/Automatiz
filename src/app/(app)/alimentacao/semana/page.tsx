@@ -68,7 +68,7 @@ export default async function WeekPage({ searchParams }: { searchParams: Promise
             <h2 id="totais" className="sr-only">
               Totais por dia
             </h2>
-            <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <div className="relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
               <table className="w-full min-w-[40rem] border-separate border-spacing-0 text-sm">
                 <caption className="sr-only">Energia, macronutrientes, refeições e custo estimado por dia</caption>
                 <thead>

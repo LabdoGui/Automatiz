@@ -117,7 +117,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         </section>
 
         <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8" aria-labelledby="transparencia">
-          <div className="grid gap-8 lg:grid-cols-[1fr_1.3fr]">
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.3fr] [&>*]:min-w-0">
             <h2 id="transparencia" className="text-3xl font-extrabold sm:text-4xl">
               Transparente por padrão.
             </h2>

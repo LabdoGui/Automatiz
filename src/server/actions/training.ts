@@ -123,9 +123,8 @@ export async function pauseSessionAction(_prev: unknown, formData: FormData): Pr
   });
 }
 
-export async function finishSessionAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
-  let target: string | null = null;
-  const result = await safeAction(async () => {
+export async function finishSessionAction(_prev: unknown, formData: FormData): Promise<ActionResult<{ redirectTo: string }>> {
+  return safeAction<{ redirectTo: string }>(async () => {
     const { user, tz } = await ctx();
     const parsed = parseInput(
       z.object({ sessionId: zId, notes: zOptionalText(600), perceivedEffort: zOptionalInt(1, 10, "o esforço percebido"), discomfort: zBool }),
@@ -139,12 +138,11 @@ export async function finishSessionAction(_prev: unknown, formData: FormData): P
       discomfort: d.discomfort,
     });
     const celebrations = await recordActivity(user.id, [{ kind: "WORKOUT_COMPLETED", refId: d.sessionId }], { timeZone: tz });
-    refresh();
-    target = `/treino/historico/${d.sessionId}?concluido=1`;
-    return { ok: true, celebrations, message: "Treino registrado. Bom trabalho!" };
+    // Sem revalidatePath: ele re-renderizaria a sessão atual (já finalizada) e
+    // descartaria o resultado. As rotas são dinâmicas; o destino carrega dados novos.
+    // O cliente navega depois de exibir as celebrações (um redirect aqui as descartaria).
+    return { ok: true, celebrations, data: { redirectTo: `/treino/historico/${d.sessionId}?concluido=1` } };
   });
-  if (target) redirect(target);
-  return result;
 }
 
 export async function cancelSessionAction(_prev: unknown, formData: FormData): Promise<ActionResult> {

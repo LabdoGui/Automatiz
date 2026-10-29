@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { addDays, isISODate, localDate, startOfWeek } from "@/domain/dates";
 import { MEAL_TYPES } from "@/domain/planner/meal-types";
@@ -110,14 +111,19 @@ export async function addMealAction(_prev: unknown, formData: FormData): Promise
 }
 
 export async function deleteMealAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
-  return safeAction(async () => {
+  let target: string | null = null;
+  const result = await safeAction(async () => {
     const { user } = await ctx();
     const parsed = parseInput(z.object({ mealId: zId }), formData);
     if (!parsed.ok) return parsed.result;
-    await planner.deleteMeal(user.id, parsed.data.mealId);
+    const meal = await planner.deleteMeal(user.id, parsed.data.mealId);
     refresh();
-    return { ok: true, message: "Refeição removida do plano." };
+    target = `/alimentacao?dia=${meal.date.toISOString().slice(0, 10)}`;
+    return { ok: true };
   });
+  // A página da refeição deixa de existir: o redirecionamento acontece no servidor.
+  if (target) redirect(target);
+  return result;
 }
 
 export async function updateMealDetailsAction(_prev: unknown, formData: FormData): Promise<ActionResult> {

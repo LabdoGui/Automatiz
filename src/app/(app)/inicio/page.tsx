@@ -185,7 +185,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         )}
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2 [&>*]:min-w-0">
         {/* Alimentação de hoje */}
         <section aria-labelledby="hoje-alimentacao" className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
@@ -219,7 +219,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             </div>
           </div>
           {todayMeals.length > 0 && (
-            <ol className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <ol className="relative flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               {todayMeals.map((m) => (
                 <li key={m.id} className="shrink-0">
                   <Link
@@ -292,7 +292,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         </section>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2 [&>*]:min-w-0">
         {profile.trackWater && profile.waterGoalMl ? (
           <section aria-labelledby="agua">
             <h2 id="agua" className="mb-4 text-lg font-bold">
@@ -357,7 +357,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       </div>
 
       {/* Desafios e conquistas */}
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2 [&>*]:min-w-0">
         <section aria-labelledby="desafios">
           <div className="mb-4 flex items-center justify-between">
             <h2 id="desafios" className="text-lg font-bold">

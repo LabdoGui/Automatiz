@@ -118,7 +118,7 @@ export default async function ShoppingPage() {
           </EmptyState>
         )
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+        <div className="grid gap-8 lg:grid-cols-[1fr_20rem] [&>*]:min-w-0">
           <div className="min-w-0">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm text-ink-2">

@@ -109,7 +109,7 @@ export default async function PlannerPage({ searchParams }: { searchParams: Prom
           O VIVA monta a semana a partir do seu perfil: refeições, restrições, utensílios, despensa e orçamento.
         </EmptyState>
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+        <div className="grid gap-8 lg:grid-cols-[1fr_20rem] [&>*]:min-w-0">
           <section aria-labelledby="dia-titulo" className="min-w-0">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>

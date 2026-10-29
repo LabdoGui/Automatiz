@@ -53,7 +53,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHeader backHref="/alimentacao" eyebrow="Alimentação" title="Receitas" description="Receitas compatíveis com suas alergias, restrições e preferências." />
-      <nav aria-label="Filtros" className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none">
+      <nav aria-label="Filtros" className="relative -mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none">
         <Link href={qs(null, quick)} aria-current={!type ? "page" : undefined} className={cn("shrink-0 rounded-full border px-4 py-2 text-sm font-semibold", !type ? "border-ink bg-ink text-bg" : "border-line text-ink-2")}>
           Todas
         </Link>

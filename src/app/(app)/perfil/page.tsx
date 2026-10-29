@@ -82,7 +82,7 @@ export default async function ProfilePage() {
         </div>
       </Link>
 
-      <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr] [&>*]:min-w-0">
         <div>
           <SectionTitle>Seu perfil</SectionTitle>
           <dl className="divide-y divide-line border-y border-line">
