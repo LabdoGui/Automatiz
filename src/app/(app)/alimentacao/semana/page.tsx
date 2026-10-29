@@ -166,8 +166,8 @@ export default async function WeekPage({ searchParams }: { searchParams: Promise
         </>
       )}
 
-      <section aria-labelledby="versoes" id="versoes">
-        <SectionTitle id="versoes">
+      <section aria-labelledby="versoes-titulo" id="versoes">
+        <SectionTitle id="versoes-titulo">
           <span className="inline-flex items-center gap-2">
             <History className="h-5 w-5 text-ink-2" aria-hidden /> Versões do plano
           </span>

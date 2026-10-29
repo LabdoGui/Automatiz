@@ -4,6 +4,7 @@ import {
   createContext,
   startTransition,
   useActionState,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -35,6 +36,11 @@ type Action<T> = (state: unknown, formData: FormData) => Promise<ActionResult<T>
  *  - mostra erros por campo e um resumo acessível;
  *  - exibe toast de sucesso/erro e celebrações retornadas pela action;
  *  - não limpa os campos quando há erro de validação.
+ *
+ * Toast, celebrações, fechamento de diálogo e navegação rodam assim que a
+ * action responde (e não num efeito), para funcionar mesmo quando a
+ * revalidação da página desmonta o próprio formulário — por exemplo, a opção
+ * de troca que deixa de existir depois de aplicada.
  */
 export function ActionForm<T>({
   action,
@@ -59,27 +65,43 @@ export function ActionForm<T>({
   id?: string;
   "aria-label"?: string;
 }) {
-  const [state, formAction, pending] = useActionState<ActionState<T>, FormData>(action, null);
   const { toast, celebrate } = useFeedback();
   const dialog = useDialogControl();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
+  const latest = useRef({ toast, celebrate, dialog, router, showSuccessToast, closeDialogOnSuccess, onSuccess, redirectTo });
+  useEffect(() => {
+    latest.current = { toast, celebrate, dialog, router, showSuccessToast, closeDialogOnSuccess, onSuccess, redirectTo };
+  });
+
+  const run = useCallback(
+    async (prev: ActionState<T>, formData: FormData): Promise<ActionState<T>> => {
+      const result = await action(prev, formData);
+      if (!result) return result;
+      const o = latest.current;
+      if (result.ok) {
+        if (o.showSuccessToast && result.message) o.toast(result.message, "success");
+        if (result.celebrations?.length) o.celebrate(result.celebrations);
+        if (o.closeDialogOnSuccess) o.dialog?.close();
+        o.onSuccess?.(result);
+        const dynamicTarget = (result.data as { redirectTo?: unknown } | undefined)?.redirectTo;
+        if (typeof dynamicTarget === "string" && dynamicTarget.startsWith("/")) o.router.push(dynamicTarget);
+        else if (o.redirectTo) o.router.push(o.redirectTo);
+      } else if (!result.fieldErrors || Object.keys(result.fieldErrors).length === 0) {
+        o.toast(result.error, "error");
+      }
+      return result;
+    },
+    [action],
+  );
+  const [state, formAction, pending] = useActionState<ActionState<T>, FormData>(run, null);
 
   useEffect(() => {
     if (!state) return;
     if (state.ok) {
-      if (showSuccessToast && state.message) toast(state.message, "success");
-      if (state.celebrations?.length) celebrate(state.celebrations);
       if (resetOnSuccess) formRef.current?.reset();
-      if (closeDialogOnSuccess) dialog?.close();
-      onSuccess?.(state);
-      const dynamicTarget = (state.data as { redirectTo?: unknown } | undefined)?.redirectTo;
-      if (typeof dynamicTarget === "string" && dynamicTarget.startsWith("/")) router.push(dynamicTarget);
-      else if (redirectTo) router.push(redirectTo);
-    } else if (!state.fieldErrors || Object.keys(state.fieldErrors).length === 0) {
-      toast(state.error, "error");
-    } else {
+    } else if (state.fieldErrors && Object.keys(state.fieldErrors).length > 0) {
       summaryRef.current?.focus();
     }
     // Reage apenas a novos resultados da action.

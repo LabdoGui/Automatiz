@@ -352,8 +352,8 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
           </section>
         )}
 
-        <section aria-labelledby="gastos" id="gastos" className="scroll-mt-24">
-          <SectionTitle id="gastos">Gastos com alimentação</SectionTitle>
+        <section aria-labelledby="gastos-titulo" id="gastos" className="scroll-mt-24">
+          <SectionTitle id="gastos-titulo">Gastos com alimentação</SectionTitle>
           {spending.length === 0 ? (
             <p className="text-sm text-ink-2">Listas de compras do período aparecem aqui, com o valor pago e o orçamento.</p>
           ) : (

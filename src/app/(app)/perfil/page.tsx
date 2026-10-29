@@ -157,8 +157,8 @@ export default async function ProfilePage() {
         </div>
 
         <div className="flex flex-col gap-10">
-          <section aria-labelledby="meta" id="meta" className="scroll-mt-24">
-            <SectionTitle id="meta">Meta nutricional</SectionTitle>
+          <section aria-labelledby="meta-titulo" id="meta" className="scroll-mt-24">
+            <SectionTitle id="meta-titulo">Meta nutricional</SectionTitle>
             <div className="rounded-3xl border border-line bg-surface p-5">
               {goal ? (
                 <>
@@ -274,8 +274,8 @@ export default async function ProfilePage() {
             </ActionForm>
           </section>
 
-          <section aria-labelledby="privacidade" id="privacidade" className="scroll-mt-24">
-            <SectionTitle id="privacidade">
+          <section aria-labelledby="privacidade-titulo" id="privacidade" className="scroll-mt-24">
+            <SectionTitle id="privacidade-titulo">
               <span className="inline-flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-ink-2" aria-hidden /> Privacidade e dados
               </span>

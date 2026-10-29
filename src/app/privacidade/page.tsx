@@ -126,7 +126,7 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        <section aria-labelledby="saude" id="saude" className="rounded-3xl border border-amber/30 bg-amber-soft p-6">
+        <section aria-labelledby="saude-title" id="saude" className="rounded-3xl border border-amber/30 bg-amber-soft p-6">
           <h2 id="saude-title">Aviso de saúde</h2>
           <ul className="list-disc space-y-2 pl-5 text-ink">
             <li>O VIVA é uma ferramenta de organização e acompanhamento. Não é um serviço médico ou nutricional.</li>

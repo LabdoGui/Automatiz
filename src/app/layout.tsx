@@ -5,6 +5,7 @@ import "@fontsource-variable/figtree";
 import "./globals.css";
 import { readUiPrefs } from "@/server/ui-prefs";
 import { FeedbackProvider } from "@/components/ui/feedback";
+import { ServiceWorkerRegistration } from "@/components/shell/service-worker";
 
 export const metadata: Metadata = {
   title: { default: "VIVA — Seu plano, seu ritmo.", template: "%s · VIVA" },
@@ -41,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Pular para o conteúdo
         </a>
         <FeedbackProvider celebrations={prefs.celebrate}>{children}</FeedbackProvider>
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
