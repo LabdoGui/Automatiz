@@ -18,6 +18,7 @@ import { Segmented, Toggle } from "@/components/forms/choices";
 import { SectionEditor } from "@/components/profile/section-editor";
 import { EstimateCalculator } from "@/components/profile/estimate-calculator";
 import { requireOnboardedUser } from "@/server/session";
+import { aiSettings } from "@/server/ai/claude";
 import { db } from "@/server/db";
 import { buildProfileFormData } from "@/server/profile/form-data";
 import { getActiveGoal } from "@/server/services/profile";
@@ -63,7 +64,7 @@ export default async function ProfilePage() {
   const mascot = mascotForLevel(level.level);
   const muted = (t: string) => <span className="text-ink-2">{t}</span>;
   const critical = [...d.allergies, ...d.intolerances].map(labelForTag).concat(d.allergiesText ? d.allergiesText.split(", ") : []);
-  const aiConfigured = Boolean(process.env.ANTHROPIC_API_KEY);
+  const aiConfigured = aiSettings().configured;
 
   return (
     <>

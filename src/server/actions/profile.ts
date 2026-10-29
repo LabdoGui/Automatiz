@@ -17,6 +17,7 @@ import { createSuggestedRoutine } from "../services/training";
 import { recordActivity } from "../services/gamification";
 import { recordConsents, revokeConsent } from "../services/account";
 import { CELEBRATE_COOKIE, MOTION_COOKIE, THEME_COOKIE, UI_COOKIE_OPTIONS, themeFromSetting } from "../ui-prefs";
+import { aiSettings } from "../ai/claude";
 
 const stepKeySchema = z.enum(STEP_KEYS);
 
@@ -177,6 +178,7 @@ export async function setAiOptInAction(_prev: unknown, formData: FormData): Prom
     const user = await requireUser();
     await consumeRateLimit(`ai-optin:${user.id}`, 10, 60);
     const enable = formData.get("enable") === "1";
+    if (enable && !aiSettings().configured) throw new UserFacingError("Nenhum provedor de IA está configurado nesta instalação.");
     await db.userSettings.upsert({
       where: { userId: user.id },
       create: { userId: user.id, assistantAiOptIn: enable },

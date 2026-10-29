@@ -14,6 +14,7 @@ import { clockFor, requireOnboardedUser } from "@/server/session";
 import { db } from "@/server/db";
 import { comparablePricePerKg, latestPrices, PRICE_SOURCE_LABEL, PRODUCT_SELECT, visibleProductsWhere } from "@/server/services/prices";
 import { addPriceAction, createProductAction, deletePriceAction } from "@/server/actions/shopping";
+import { configuredPriceProviders } from "@/server/integrations/price-providers";
 
 export const metadata: Metadata = { title: "Preços" };
 
@@ -28,6 +29,7 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
   const { user, settings } = await requireOnboardedUser();
   const { today } = clockFor(settings);
   const { q = "" } = await searchParams;
+  const providers = configuredPriceProviders();
   const [products, latest, history] = await Promise.all([
     db.product.findMany({ where: visibleProductsWhere(user.id), select: PRODUCT_SELECT, orderBy: [{ category: "asc" }, { name: "asc" }] }),
     latestPrices(user.id),
@@ -99,8 +101,9 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           <ImportPricesForm />
         </section>
         <FormMessage>
-          Integrações automáticas com supermercados ainda não existem no VIVA. A arquitetura está pronta para recebê-las (preços
-          com origem “Confirmado pela integração”), mas hoje nenhum preço é buscado na internet.
+          {providers.length === 0
+            ? "Nenhuma integração de preços está configurada nesta instalação, então nenhum preço é buscado na internet. Quando houver uma fonte autorizada, os valores aparecerão com origem “Confirmado pela integração”, loja e data."
+            : `Integrações configuradas: ${providers.map((p) => p.name).join(", ")}. Preços vindos delas aparecem com origem “Confirmado pela integração”, loja e data.`}
         </FormMessage>
       </div>
 

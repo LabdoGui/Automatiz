@@ -109,8 +109,10 @@ export default function PrivacyPage() {
             <li>Registros de erro não incluem dados pessoais.</li>
             <li>Sessões expiram após 30 dias sem uso. Os dados ficam guardados enquanto a conta existir.</li>
             <li>
-              Assistente com IA: quando ativado, enviamos apenas o necessário (preferências, restrições e o contexto da pergunta),
-              sem nome, e-mail ou medidas corporais.
+              Assistente com IA: quando ativado, a pergunta é enviada pelo servidor à Anthropic (Claude). Se você permitir, vão junto
+              apenas objetivo, nível e local de treino, preferência de cozinha, alergias, intolerâncias, restrições e alimentos que você não
+              come — nunca nome, e-mail, idade, peso, medidas ou orçamento. A tela do assistente mostra exatamente o que será enviado, e a
+              conversa pode ser apagada a qualquer momento.
             </li>
           </ul>
         </section>
