@@ -232,6 +232,7 @@ model UserSettings {
 
 enum ConsentKind {
   PRIVACY_POLICY
+  TERMS
   HEALTH_DATA
   AI_PROCESSING
 }

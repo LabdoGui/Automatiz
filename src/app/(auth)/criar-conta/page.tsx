@@ -39,7 +39,11 @@ export default async function SignUpPage() {
           hint="Mínimo de 8 caracteres. Use uma frase fácil de lembrar e difícil de adivinhar."
         />
         <Consent name="acceptPrivacy">
-          Li e aceito a{" "}
+          Li e aceito os{" "}
+          <Link href="/termos" target="_blank" className="font-semibold text-lime-text underline underline-offset-2">
+            termos de uso
+          </Link>{" "}
+          e a{" "}
           <Link href="/privacidade" target="_blank" className="font-semibold text-lime-text underline underline-offset-2">
             política de privacidade
           </Link>

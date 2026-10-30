@@ -44,7 +44,8 @@ O VIVA junta essas peças num fluxo único e honesto:
 ## Funcionalidades implementadas
 
 **Conta e perfil**
-- Cadastro e login por e-mail/senha, sessão segura, saída da conta, consentimentos versionados (política de privacidade e dados de saúde).
+- Cadastro e login por e-mail/senha, sessão segura, saída da conta, consentimentos versionados (termos de uso, política de privacidade e dados de saúde).
+- Recuperação de senha por e-mail (link de uso único, válido por 60 minutos, que encerra as outras sessões), confirmação de e-mail e troca de senha no perfil. O envio usa SMTP e só aparece quando um provedor está configurado.
 - Onboarding progressivo em 9 etapas (perfil, objetivo, rotina de treino, refeições e cozinha, gostos, alergias × preferências claramente separadas, orçamento por dia/semana/mês, meta do(a) nutricionista com período diário ou semanal, despensa), resumo e confirmação. Tudo editável depois em **Perfil**.
 - Estimativa educativa de gasto energético (Mifflin-St Jeor, faixa ±10%, só no navegador e só para maiores de 18 anos) — nunca vira meta automaticamente.
 
@@ -186,7 +187,9 @@ npm run dev                         # http://localhost:3000
 | `ANTHROPIC_API_KEY` | não | Ativa a conversa com IA no assistente. Fica só no servidor. |
 | `VIVA_AI_MODEL` | não | Modelo da IA (padrão `claude-opus-5-5`). |
 | `VIVA_AI_MAX_PER_HOUR` | não | Perguntas à IA por usuário por hora (padrão 20, máximo 500). |
-| `VIVA_PRIVACY_CONTACT` | não | Contato do encarregado de dados exibido em `/privacidade`. |
+| `VIVA_PRIVACY_CONTACT` | não | Contato do encarregado de dados exibido em `/privacidade` e `/termos`. |
+| `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD` | não | Envio de e-mails (recuperação de senha e confirmação de e-mail) por SMTP. Sem eles, esses recursos ficam ocultos. |
+| `EMAIL_TRANSPORT=console` | não | Só em desenvolvimento: mostra os e-mails no terminal em vez de enviar. |
 | `NEXT_TELEMETRY_DISABLED` | não | Desativa a telemetria do Next.js. |
 | `VIVA_DEMO_PASSWORD` / `VIVA_ALLOW_DEMO` | não | Apenas para o seed de demonstração. |
 | `VIVA_DISABLE_AUTH_RATE_LIMIT` | não | Somente testes locais; nunca em produção. |
@@ -256,7 +259,7 @@ O VIVA é um app Next.js padrão com PostgreSQL; qualquer plataforma Node serve.
    npm start              # ou o comando de start da plataforma
    ```
 4. Sirva **apenas via HTTPS** (os cookies de sessão passam a ser `Secure`), atrás de um proxy/CDN.
-5. Preencha `VIVA_PRIVACY_CONTACT` e revise a política em `/privacidade` com o responsável jurídico antes de abrir ao público.
+5. Preencha `VIVA_PRIVACY_CONTACT` e revise a política em `/privacidade` e os termos em `/termos` com o responsável jurídico antes de abrir ao público (os termos são um texto-base, ainda sem revisão jurídica).
 
 Em Vercel: conecte o repositório, defina as variáveis, use um PostgreSQL externo (Neon, Supabase, RDS…) e rode `npm run db:migrate` como etapa de build ou manualmente antes de promover a versão.
 
@@ -265,12 +268,12 @@ Em Vercel: conecte o repositório, defina as variáveis, use um PostgreSQL exter
 | Integração | Situação | Requisitos |
 |---|---|---|
 | **Claude (Anthropic)** — conversa do assistente | Implementada, opcional | `ANTHROPIC_API_KEY` no servidor e consentimento de cada usuário. Usa o modelo de `VIVA_AI_MODEL` (padrão `claude-opus-5-5`), esforço `medium` e *fallback* de recusa no servidor (`fallbacks: "default"`). Envia só a pergunta, as últimas mensagens e, se a pessoa permitir, um contexto mínimo (objetivo, nível/local de treino, cozinha, alergias, intolerâncias, restrições e alimentos que não come). Nunca envia nome, e-mail, idade, peso, medidas ou orçamento. |
+| **E-mail transacional (SMTP)** | Implementado, opcional | Qualquer provedor com SMTP — por exemplo Brevo, Resend, Amazon SES ou Gmail com senha de app (confira os limites atuais do plano gratuito de cada um). Configure `EMAIL_FROM` e `SMTP_*`, e um domínio com SPF, DKIM e DMARC para os e-mails não caírem no spam. Testado com um servidor SMTP local; o envio por um provedor real ainda não foi testado. |
 | **Preços de supermercados** | Contrato pronto, **nenhum provedor configurado** | Implemente `PriceProvider` em `src/server/integrations/price-providers.ts` com uma fonte **autorizada** (API oficial/parceria). As cotações são validadas (`quoteProblem`) e gravadas com origem "Confirmado pela integração", loja, data e referência. O VIVA não coleta preços de sites sem autorização. |
 | **Tabela TACO** | Embutida no seed | Nenhum requisito em execução; a conversão é reprodutível com `scripts/convert_taco.py`. |
 
 ## Funcionalidades ainda não implementadas
 
-- Recuperação de senha por e-mail e verificação de e-mail (exigem um provedor de e-mail/SMTP).
 - Notificações push (os lembretes existem apenas dentro do app).
 - Vídeos ou imagens dos exercícios (há passo a passo em texto e mapa corporal).
 - Integração automática com preços de mercados (há apenas o contrato).
@@ -297,7 +300,7 @@ Em Vercel: conecte o repositório, defina as variáveis, use um PostgreSQL exter
 - **Segredos:** chaves só em variáveis de ambiente do servidor; nada sensível em `NEXT_PUBLIC_*`; `.env` fora do Git.
 - **Cabeçalhos:** `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`; `poweredByHeader` desativado.
 - **Logs:** erros registram apenas tipo/código, sem dados pessoais nem conteúdo de conversas.
-- **LGPD:** consentimentos versionados (política, dados de saúde e IA, com revogação), página `/privacidade` com finalidades e direitos, exportação completa em JSON e exclusão da conta (senha + confirmação "EXCLUIR") com remoção em cascata.
+- **LGPD:** consentimentos versionados (termos de uso, política, dados de saúde e IA, com revogação), página `/privacidade` com finalidades e direitos, exportação completa em JSON e exclusão da conta (senha + confirmação "EXCLUIR") com remoção em cascata.
 - **PWA:** o service worker não guarda páginas autenticadas em cache.
 
 ## Licenças e fontes dos dados

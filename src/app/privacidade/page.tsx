@@ -5,7 +5,7 @@ import { Logo } from "@/components/brand/logo";
 export const metadata: Metadata = { title: "Privacidade, dados e aviso de saúde" };
 
 const DATA_TABLE: { what: string; why: string; basis: string }[] = [
-  { what: "Nome ou apelido e e-mail", why: "Criar e proteger sua conta; identificar você no app.", basis: "Execução do serviço (art. 7º, V)" },
+  { what: "Nome ou apelido e e-mail", why: "Criar e proteger sua conta; identificar você no app; enviar links de recuperação de senha e de confirmação de e-mail pelo provedor de e-mail configurado.", basis: "Execução do serviço (art. 7º, V)" },
   { what: "Senha", why: "Autenticação. Guardada apenas como hash (scrypt), nunca em texto.", basis: "Execução do serviço" },
   {
     what: "Idade, altura, peso e medidas (opcionais)",

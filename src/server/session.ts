@@ -10,6 +10,7 @@ export interface CurrentUser {
   id: string;
   name: string;
   email: string;
+  emailVerified: boolean;
 }
 
 /** Lê a sessão uma única vez por requisição. */
@@ -20,7 +21,7 @@ export const getSession = cache(async () => {
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const session = await getSession();
   if (!session) return null;
-  return { id: session.user.id, name: session.user.name, email: session.user.email };
+  return { id: session.user.id, name: session.user.name, email: session.user.email, emailVerified: session.user.emailVerified };
 }
 
 /** Exige usuário autenticado (páginas e Server Actions). */

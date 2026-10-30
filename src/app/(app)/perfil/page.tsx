@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, HeartPulse, LogOut, Palette, ShieldAlert, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
+import { Download, HeartPulse, KeyRound, LogOut, MailCheck, Palette, ShieldAlert, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
 import { WEEKDAY_SHORT } from "@/domain/dates";
 import { formatBRL, formatDateBR, formatGrams, formatInt } from "@/domain/format";
 import { levelFromXp, mascotForLevel } from "@/domain/gamification/rules";
@@ -23,7 +23,8 @@ import { db } from "@/server/db";
 import { buildProfileFormData } from "@/server/profile/form-data";
 import { getActiveGoal } from "@/server/services/profile";
 import { clearGoalAction, saveGoalAction, saveSettingsAction, setAiOptInAction } from "@/server/actions/profile";
-import { deleteAccountAction, signOutAction } from "@/server/actions/auth";
+import { changePasswordAction, deleteAccountAction, resendVerificationAction, signOutAction } from "@/server/actions/auth";
+import { emailSettings } from "@/server/email/send";
 
 export const metadata: Metadata = { title: "Perfil" };
 
@@ -53,8 +54,10 @@ function Row({ label, children, action, id }: { label: string; children: React.R
   );
 }
 
-export default async function ProfilePage() {
+export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ email?: string; error?: string }> }) {
   const { user, profile, settings } = await requireOnboardedUser();
+  const sp = await searchParams;
+  const emailEnabled = emailSettings().configured;
   const [d, goal, consents] = await Promise.all([
     buildProfileFormData(user.id, user.name),
     getActiveGoal(user.id),
@@ -309,15 +312,59 @@ export default async function ProfilePage() {
                 <ul className="mt-2 space-y-1">
                   {consents.map((c) => (
                     <li key={c.id}>
-                      {{ PRIVACY_POLICY: "Política de privacidade", HEALTH_DATA: "Dados de saúde", AI_PROCESSING: "Uso de IA" }[c.kind]} · versão {c.version} ·{" "}
+                      {{ PRIVACY_POLICY: "Política de privacidade", TERMS: "Termos de uso", HEALTH_DATA: "Dados de saúde", AI_PROCESSING: "Uso de IA" }[c.kind]} · versão {c.version} ·{" "}
                       {formatDateBR(c.grantedAt.toISOString().slice(0, 10))}
                       {c.revokedAt ? ` · revogado em ${formatDateBR(c.revokedAt.toISOString().slice(0, 10))}` : ""}
                     </li>
                   ))}
                 </ul>
               </details>
+              <div className="rounded-2xl border border-line p-4">
+                <p className="flex items-center gap-2 font-semibold">
+                  <KeyRound className="h-4 w-4 text-lime-text" aria-hidden /> Segurança da conta
+                </p>
+                {sp.email === "verificado" && !sp.error && (
+                  <p role="status" className="mt-2 rounded-xl bg-lime-soft px-3 py-2 text-sm text-lime-text">
+                    E-mail confirmado. Obrigado!
+                  </p>
+                )}
+                {sp.error && (
+                  <p role="alert" className="mt-2 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-text">
+                    O link de confirmação é inválido ou expirou. Peça um novo abaixo.
+                  </p>
+                )}
+                <p className="mt-2 text-sm text-ink-2">
+                  {user.emailVerified
+                    ? `E-mail ${user.email} confirmado.`
+                    : emailEnabled
+                      ? `E-mail ${user.email} ainda não confirmado. A confirmação permite recuperar a conta se você esquecer a senha.`
+                      : "O envio de e-mails não está configurado nesta instalação; a recuperação de senha por e-mail fica indisponível."}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {!user.emailVerified && emailEnabled && (
+                    <ActionForm action={resendVerificationAction}>
+                      <SubmitButton variant="secondary" size="sm" pendingLabel="Enviando…">
+                        <MailCheck className="h-4 w-4" aria-hidden /> Enviar confirmação
+                      </SubmitButton>
+                    </ActionForm>
+                  )}
+                  <Dialog title="Alterar senha" description="Ao alterar, as sessões em outros aparelhos são encerradas." trigger="Alterar senha" triggerVariant="secondary" triggerSize="sm">
+                    <ActionForm action={changePasswordAction} closeDialogOnSuccess resetOnSuccess className="flex flex-col gap-4">
+                      <TextField name="currentPassword" type="password" label="Senha atual" autoComplete="current-password" required />
+                      <TextField name="password" type="password" label="Nova senha" autoComplete="new-password" hint="De 8 a 128 caracteres." required />
+                      <TextField name="confirm" type="password" label="Repita a nova senha" autoComplete="new-password" required />
+                      <SubmitButton block pendingLabel="Alterando…">
+                        Alterar senha
+                      </SubmitButton>
+                    </ActionForm>
+                  </Dialog>
+                </div>
+              </div>
               <Link href="/privacidade" className="text-sm font-semibold text-lime-text hover:underline">
                 Ler a política de privacidade
+              </Link>
+              <Link href="/termos" className="text-sm font-semibold text-lime-text hover:underline">
+                Ler os termos de uso
               </Link>
               <form action={signOutAction}>
                 <button type="submit" className="flex min-h-12 w-full items-center gap-2 rounded-2xl border border-line px-4 font-semibold hover:bg-surface-2">

@@ -60,7 +60,7 @@ export async function exportUserData(userId: string) {
   };
 }
 
-export async function recordConsents(userId: string, kinds: ("PRIVACY_POLICY" | "HEALTH_DATA" | "AI_PROCESSING")[]) {
+export async function recordConsents(userId: string, kinds: ("PRIVACY_POLICY" | "TERMS" | "HEALTH_DATA" | "AI_PROCESSING")[]) {
   await db.consentRecord.createMany({ data: kinds.map((kind) => ({ userId, kind, version: CONSENT_VERSION })) });
 }
 

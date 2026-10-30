@@ -8,12 +8,13 @@ import { isAPIError } from "better-auth/api";
 import type { ActionResult } from "@/lib/action-types";
 import { zBool } from "@/lib/validation";
 import { auth } from "../auth";
+import { emailSettings } from "../email/send";
 import { db } from "../db";
 import { parseInput, safeAction, UserFacingError } from "../action-utils";
 import { consumeRateLimit } from "../rate-limit";
 import { recordConsents } from "../services/account";
 import { CELEBRATE_COOKIE, MOTION_COOKIE, THEME_COOKIE, UI_COOKIE_OPTIONS, themeFromSetting } from "../ui-prefs";
-import { getCurrentUser } from "../session";
+import { getCurrentUser, requireUser } from "../session";
 
 const emailSchema = z.string().trim().toLowerCase().email("Informe um e-mail válido.").max(254);
 const passwordSchema = z
@@ -25,7 +26,7 @@ const signUpSchema = z.object({
   name: z.string().trim().min(1, "Informe seu nome ou apelido.").max(60, "Use no máximo 60 caracteres."),
   email: emailSchema,
   password: passwordSchema,
-  acceptPrivacy: zBool.refine((v) => v, "É preciso aceitar a política de privacidade."),
+  acceptPrivacy: zBool.refine((v) => v, "É preciso aceitar os termos de uso e a política de privacidade."),
   acceptHealth: zBool.refine((v) => v, "É preciso consentir com o tratamento de dados de saúde e hábitos."),
 });
 
@@ -68,8 +69,14 @@ export async function signUpAction(_prev: unknown, formData: FormData): Promise<
       const res = await auth.api.signUpEmail({ body: { name, email, password }, headers: await headers() });
       const userId = res.user.id;
       await db.userSettings.create({ data: { userId } });
-      await recordConsents(userId, ["PRIVACY_POLICY", "HEALTH_DATA"]);
+      await recordConsents(userId, ["PRIVACY_POLICY", "HEALTH_DATA", "TERMS"]);
       await applyUiCookies(userId);
+      if (emailSettings().configured) {
+        // A conta não depende do e-mail: falha no envio não bloqueia o cadastro.
+        await auth.api.sendVerificationEmail({ body: { email, callbackURL: "/perfil?email=verificado" } }).catch(() => {
+          console.error("[viva:auth] e-mail de verificação não enviado no cadastro");
+        });
+      }
     } catch (error) {
       if (isAPIError(error)) {
         const code = (error.body as { code?: string } | undefined)?.code ?? "";
@@ -146,4 +153,87 @@ export async function deleteAccountAction(_prev: unknown, formData: FormData): P
   });
   if (deleted) redirect("/?conta=excluida");
   return result;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Recuperação e troca de senha, verificação de e-mail
+// ─────────────────────────────────────────────────────────────
+
+export async function requestPasswordResetAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  let sent = false;
+  const result = await safeAction(async () => {
+    if (!emailSettings().configured) throw new UserFacingError("A recuperação por e-mail não está disponível nesta instalação.");
+    const parsed = parseInput(z.object({ email: emailSchema }), formData);
+    if (!parsed.ok) return parsed.result;
+    await consumeRateLimit(`reset-ip:${await clientKey()}`, 10, 60 * 15);
+    await consumeRateLimit(`reset-email:${hashEmail(parsed.data.email)}`, 3, 60 * 60);
+    // Resposta idêntica exista ou não a conta (evita descobrir e-mails cadastrados).
+    await auth.api.requestPasswordReset({ body: { email: parsed.data.email } }).catch((error: unknown) => {
+      if (!isAPIError(error)) throw error;
+    });
+    sent = true;
+    return { ok: true };
+  });
+  if (sent) redirect("/esqueci-senha?enviado=1");
+  return result;
+}
+
+const newPasswordSchema = z
+  .object({ password: passwordSchema, confirm: z.string().max(128) })
+  .refine((d) => d.password === d.confirm, { path: ["confirm"], message: "As senhas não conferem." });
+
+export async function resetPasswordAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  let done = false;
+  const result = await safeAction(async () => {
+    const parsed = parseInput(newPasswordSchema.and(z.object({ token: z.string().min(10).max(200) })), formData);
+    if (!parsed.ok) return parsed.result;
+    await consumeRateLimit(`reset-submit:${await clientKey()}`, 10, 60 * 15);
+    try {
+      await auth.api.resetPassword({ body: { newPassword: parsed.data.password, token: parsed.data.token } });
+    } catch (error) {
+      if (isAPIError(error)) throw new UserFacingError("Este link é inválido ou já expirou. Peça um novo link de redefinição.");
+      throw error;
+    }
+    done = true;
+    return { ok: true };
+  });
+  if (done) redirect("/entrar?senha=redefinida");
+  return result;
+}
+
+export async function changePasswordAction(_prev: unknown, formData: FormData): Promise<ActionResult> {
+  return safeAction(async () => {
+    const user = await requireUser();
+    const parsed = parseInput(newPasswordSchema.and(z.object({ currentPassword: z.string().min(1, "Informe a senha atual.").max(128) })), formData);
+    if (!parsed.ok) return parsed.result;
+    await consumeRateLimit(`change-password:${user.id}`, 5, 60 * 15);
+    try {
+      await auth.api.changePassword({
+        body: { currentPassword: parsed.data.currentPassword, newPassword: parsed.data.password, revokeOtherSessions: true },
+        headers: await headers(),
+      });
+    } catch (error) {
+      if (isAPIError(error)) {
+        return { ok: false, error: "Senha atual incorreta.", fieldErrors: { currentPassword: ["Senha atual incorreta."] } };
+      }
+      throw error;
+    }
+    return { ok: true, message: "Senha alterada. As sessões em outros aparelhos foram encerradas." };
+  });
+}
+
+export async function resendVerificationAction(_prev: unknown, _formData: FormData): Promise<ActionResult> {
+  return safeAction(async () => {
+    const user = await requireUser();
+    if (!emailSettings().configured) throw new UserFacingError("O envio de e-mails não está configurado nesta instalação.");
+    if (user.emailVerified) return { ok: true, message: "Seu e-mail já está confirmado." };
+    await consumeRateLimit(`verify-email:${user.id}`, 3, 60 * 60);
+    try {
+      await auth.api.sendVerificationEmail({ body: { email: user.email, callbackURL: "/perfil?email=verificado" }, headers: await headers() });
+    } catch (error) {
+      if (isAPIError(error)) throw new UserFacingError("Não foi possível enviar a confirmação agora. Tente mais tarde.");
+      throw error;
+    }
+    return { ok: true, message: `Enviamos um link de confirmação para ${user.email}.` };
+  });
 }
