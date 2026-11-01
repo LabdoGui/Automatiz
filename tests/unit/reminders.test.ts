@@ -78,3 +78,27 @@ describe("lembretes no app", () => {
     expect(r).toHaveLength(4);
   });
 });
+
+describe("notificações push: janela de horário e conteúdo", () => {
+  it("respeita os horários de acordar e dormir", async () => {
+    const { isWithinActiveHours } = await import("@/domain/gamification/reminders");
+    expect(isWithinActiveHours("06:30", "07:00", "22:00")).toBe(false);
+    expect(isWithinActiveHours("07:00", "07:00", "22:00")).toBe(true);
+    expect(isWithinActiveHours("21:59", "07:00", "22:00")).toBe(true);
+    expect(isWithinActiveHours("22:00", "07:00", "22:00")).toBe(false);
+    expect(isWithinActiveHours("12:00", null, null)).toBe(true);
+    // Turno da noite: acorda 14:00, dorme 06:00
+    expect(isWithinActiveHours("02:00", "14:00", "06:00")).toBe(true);
+    expect(isWithinActiveHours("10:00", "14:00", "06:00")).toBe(false);
+  });
+
+  it("monta título, texto, link e etiqueta a partir do lembrete", async () => {
+    const { pushPayload } = await import("@/domain/gamification/reminders");
+    expect(pushPayload({ key: "water", kind: "water", text: "Água: 500 de 2.000 ml hoje.", href: "/inicio#agua" })).toEqual({
+      title: "Hora de beber água",
+      body: "Água: 500 de 2.000 ml hoje.",
+      url: "/inicio#agua",
+      tag: "water",
+    });
+  });
+});

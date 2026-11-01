@@ -102,3 +102,27 @@ export function buildReminders(input: ReminderInput, max = 4): Reminder[] {
 
   return out.slice(0, max);
 }
+
+/**
+ * Notificações só no período em que a pessoa está acordada (horários do
+ * perfil; padrão 07:00–22:00). Suporta sono que atravessa a meia-noite.
+ */
+export function isWithinActiveHours(now: string, wake: string | null, sleep: string | null): boolean {
+  const n = timeToMinutes(now);
+  const w = timeToMinutes(wake ?? "07:00");
+  const s = timeToMinutes(sleep ?? "22:00");
+  if (w === s) return true;
+  return w < s ? n >= w && n < s : n >= w || n < s;
+}
+
+const PUSH_TITLE: Record<Reminder["kind"], string> = {
+  meal: "Refeição do plano",
+  water: "Hora de beber água",
+  workout: "Treino de hoje",
+  challenge: "Desafio da semana",
+};
+
+/** Conteúdo da notificação (sem dados de saúde além do próprio lembrete). */
+export function pushPayload(reminder: Reminder): { title: string; body: string; url: string; tag: string } {
+  return { title: PUSH_TITLE[reminder.kind], body: reminder.text, url: reminder.href, tag: reminder.key };
+}

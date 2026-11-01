@@ -25,6 +25,8 @@ import { getActiveGoal } from "@/server/services/profile";
 import { clearGoalAction, saveGoalAction, saveSettingsAction, setAiOptInAction } from "@/server/actions/profile";
 import { changePasswordAction, deleteAccountAction, resendVerificationAction, signOutAction } from "@/server/actions/auth";
 import { emailSettings } from "@/server/email/send";
+import { vapidSettings } from "@/server/push/send";
+import { PushSettings } from "@/components/shell/push-settings";
 
 export const metadata: Metadata = { title: "Perfil" };
 
@@ -58,6 +60,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   const { user, profile, settings } = await requireOnboardedUser();
   const sp = await searchParams;
   const emailEnabled = emailSettings().configured;
+  const vapid = vapidSettings();
   const [d, goal, consents] = await Promise.all([
     buildProfileFormData(user.id, user.name),
     getActiveGoal(user.id),
@@ -260,12 +263,12 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               <div className="divide-y divide-line rounded-2xl border border-line px-4">
                 <Toggle name="animations" label="Animações" description="Desative para uma interface mais estática." defaultChecked={settings?.animations ?? true} />
                 <Toggle name="celebrations" label="Celebrações de conquistas" description="Tela comemorativa ao desbloquear algo." defaultChecked={settings?.celebrations ?? true} />
-                <Toggle name="notifyMeals" label="Lembretes de refeições" description="Dentro do app, no início." defaultChecked={settings?.notifyMeals ?? false} />
-                <Toggle name="notifyWater" label="Lembretes de água" description="Dentro do app, no início." defaultChecked={settings?.notifyWater ?? false} />
-                <Toggle name="notifyWorkouts" label="Lembretes de treino" description="Dentro do app, no início." defaultChecked={settings?.notifyWorkouts ?? false} />
-                <Toggle name="notifyChallenges" label="Avisos de desafios" description="Dentro do app, no início." defaultChecked={settings?.notifyChallenges ?? false} />
+                <Toggle name="notifyMeals" label="Lembretes de refeições" description="No início do app e no celular, se ativado abaixo." defaultChecked={settings?.notifyMeals ?? false} />
+                <Toggle name="notifyWater" label="Lembretes de água" description="No início do app e no celular, se ativado abaixo." defaultChecked={settings?.notifyWater ?? false} />
+                <Toggle name="notifyWorkouts" label="Lembretes de treino" description="No início do app e no celular, se ativado abaixo." defaultChecked={settings?.notifyWorkouts ?? false} />
+                <Toggle name="notifyChallenges" label="Avisos de desafios" description="No início do app e no celular, se ativado abaixo." defaultChecked={settings?.notifyChallenges ?? false} />
               </div>
-              <p className="text-xs text-ink-3">Notificações push ainda não estão disponíveis: os lembretes aparecem apenas dentro do app.</p>
+              <PushSettings publicKey={vapid.configured ? vapid.publicKey : null} />
               <SelectField name="timezone" label="Fuso horário" defaultValue={settings?.timezone ?? "America/Sao_Paulo"}>
                 {TIMEZONES.map(([v, l]) => (
                   <option key={v} value={v}>

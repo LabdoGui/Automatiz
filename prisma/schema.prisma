@@ -47,6 +47,8 @@ model User {
   achievements      UserAchievement[]
   challenges        UserChallenge[]
   assistantMessages AssistantMessage[]
+  pushSubscriptions PushSubscription[]
+  pushDeliveries    PushDelivery[]
   customFoods       Food[]
   customProducts    Product[]
   customRecipes     Recipe[]
@@ -1006,3 +1008,39 @@ model AssistantMessage {
   @@index([userId, createdAt])
   @@map("assistant_message")
 }
+
+// ─────────────────────────────────────────────────────────────
+// Notificações push (Web Push / VAPID)
+// ─────────────────────────────────────────────────────────────
+
+/// Inscrição de um navegador/aparelho para receber notificações.
+model PushSubscription {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// URL do serviço de push do navegador (única por inscrição)
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastSentAt DateTime?
+  failures   Int       @default(0)
+
+  @@index([userId])
+  @@map("push_subscription")
+}
+
+/// Lembretes já enviados (evita repetir o mesmo aviso no mesmo dia).
+model PushDelivery {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Chave do lembrete + data local (ex.: "water:2026-11-01")
+  key    String
+  sentAt DateTime @default(now())
+
+  @@unique([userId, key])
+  @@map("push_delivery")
+}
+

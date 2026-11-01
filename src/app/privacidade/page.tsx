@@ -29,6 +29,11 @@ const DATA_TABLE: { what: string; why: string; basis: string }[] = [
     basis: "Consentimento (art. 7º, I e art. 11, I)",
   },
   {
+    what: "Inscrição de notificações do aparelho (se você ativar)",
+    why: "Enviar os lembretes que você ligou. O aviso passa pelo serviço de notificações do seu navegador (Google, Mozilla ou Apple) e contém só o texto do lembrete.",
+    basis: "Consentimento (art. 7º, I)",
+  },
+  {
     what: "Endereço IP e navegador da sessão",
     why: "Segurança da conta e limitação de tentativas de acesso.",
     basis: "Legítimo interesse / segurança (art. 7º, IX)",

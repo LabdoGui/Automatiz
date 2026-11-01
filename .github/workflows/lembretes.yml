@@ -1,0 +1,28 @@
+name: Lembretes (notificações push)
+
+# Agendador gratuito: a cada 15 minutos chama a rota de lembretes do VIVA.
+# Ative definindo os segredos do repositório VIVA_URL (ex.: https://viva.seudominio.com.br)
+# e CRON_SECRET (o mesmo valor configurado no servidor). Agendamentos do
+# GitHub Actions rodam apenas no branch padrão do repositório.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Chamar /api/cron/lembretes
+        env:
+          VIVA_URL: ${{ secrets.VIVA_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$VIVA_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Segredos VIVA_URL e CRON_SECRET não definidos: nada a fazer."
+            exit 0
+          fi
+          curl --fail --silent --show-error --max-time 60 \
+            -X POST -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${VIVA_URL%/}/api/cron/lembretes"

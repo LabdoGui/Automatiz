@@ -18,7 +18,8 @@
     "db:seed:demo": "tsx --tsconfig tsconfig.scripts.json prisma/seed/demo.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "push:chaves": "node scripts/gerar-chaves-vapid.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
@@ -29,11 +30,12 @@
     "better-auth": "^1.7.14",
     "lucide-react": "^1.64.0",
     "next": "16.4.3",
-    "nodemailer": "^10.1.1",
+    "nodemailer": "^10.1.7",
     "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
+    "web-push": "^3.6.7",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -46,6 +48,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/smtp-server": "^3.5.13",
+    "@types/web-push": "^3.6.4",
     "dotenv": "^18.0.9",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",

@@ -15,12 +15,12 @@ import {
   Trophy,
   Utensils,
 } from "lucide-react";
-import { localDate, localTime, startOfWeek, timeToMinutes, toDbDate, weekdayIndex, WEEKDAY_LONG } from "@/domain/dates";
+import { localTime, startOfWeek, timeToMinutes, toDbDate, weekdayIndex, WEEKDAY_LONG } from "@/domain/dates";
 import { formatBRL, formatDateLong, formatDec, formatInt } from "@/domain/format";
 import { goalProgress, mealTotals, roundTotals, sumTotals } from "@/domain/nutrition/calc";
 import { MEAL_TYPE_LABEL } from "@/domain/planner/meal-types";
 import { ACHIEVEMENTS, levelFromXp, mascotForLevel } from "@/domain/gamification/rules";
-import { buildReminders, type Reminder } from "@/domain/gamification/reminders";
+import type { Reminder } from "@/domain/gamification/reminders";
 import { Mascot } from "@/components/brand/mascot";
 import { LinkButton } from "@/components/ui/button";
 import { Meter } from "@/components/ui/meter";
@@ -39,6 +39,7 @@ import { getActiveRoutine, openSession } from "@/server/services/training";
 import { waterTotal } from "@/server/services/progress";
 import { getOpenList, listSummary } from "@/server/services/shopping";
 import { computeStats, consistencyStreak } from "@/server/services/gamification";
+import { remindersFor } from "@/server/services/reminders";
 import { generatePlanAction } from "@/server/actions/planner";
 import { startWorkoutAction } from "@/server/actions/training";
 
@@ -58,7 +59,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const weekStart = startOfWeek(today);
   const { bemvindo } = await searchParams;
 
-  const [plan, ctx, logs, routine, session, water, list, challenges, unlocked, stats, streak, lastWorkout] = await Promise.all([
+  const [plan, ctx, logs, routine, session, water, list, challenges, unlocked, stats, streak, { reminders }] = await Promise.all([
     getActivePlan(user.id, weekStart),
     plannerContext(user.id),
     dayLogs(user.id, today),
@@ -70,7 +71,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     db.userAchievement.findMany({ where: { userId: user.id }, include: { achievement: true }, orderBy: { unlockedAt: "desc" } }),
     computeStats(user.id, tz),
     consistencyStreak(user.id, tz, today),
-    db.workoutSession.findFirst({ where: { userId: user.id, status: "COMPLETED" }, orderBy: { startedAt: "desc" }, select: { startedAt: true } }),
+    remindersFor(user.id),
   ]);
 
   const todayMeals = plan?.meals.filter((m) => m.date.toISOString().slice(0, 10) === today) ?? [];
@@ -96,24 +97,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
     .map((a) => ({ a, p: a.progress(stats) }))
     .sort((x, y) => y.p.current / y.p.target - x.p.current / x.p.target)[0];
   const activeChallenges = challenges.filter((c) => c.status !== "COMPLETED" || c.completedAt);
-  const reminders = settings
-    ? buildReminders({
-        now,
-        prefs: settings,
-        pendingMeals: pending.map((m) => ({ id: m.id, label: MEAL_TYPE_LABEL[m.mealType], time: m.time })),
-        water: profile.trackWater && profile.waterGoalMl ? { totalMl: water, goalMl: profile.waterGoalMl } : null,
-        workout: todaysWorkout
-          ? {
-              label: todaysWorkout.label,
-              name: todaysWorkout.name,
-              doneToday: lastWorkout ? localDate(lastWorkout.startedAt, tz) === today : false,
-              inProgress: Boolean(session),
-            }
-          : null,
-        challenges: challenges.map((c) => ({ id: c.id, title: c.challenge.title, progress: c.progress, target: c.challenge.target, status: c.status })),
-        daysLeftInWeek: 7 - weekday,
-      })
-    : [];
 
   return (
     <div className="flex flex-col gap-8">
