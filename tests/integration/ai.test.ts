@@ -75,3 +75,19 @@ describe("assistente com IA: integração e falhas", () => {
     await expect(askClaude(ask("Oi"))).rejects.toThrow(/Não foi possível falar com o provedor/);
   });
 });
+
+describe("assistente com IA: streaming", () => {
+  it("entrega o texto em partes e a soma é a resposta final", async () => {
+    const { streamClaude } = await freshClaude({ key: "test-key", url: baseUrl });
+    const parts: string[] = [];
+    const reply = await streamClaude({ history: [], question: "Dica de lanche", context: [] }, (t) => parts.push(t));
+    expect(parts.length).toBeGreaterThan(2);
+    expect(reply).toEqual({ kind: "answer", text: parts.join(""), truncated: false });
+    expect(requests.at(-1)!.body.stream).toBe(true);
+  });
+
+  it("recusa no meio do streaming não vira resposta", async () => {
+    const { streamClaude } = await freshClaude({ key: "test-key", url: baseUrl });
+    await expect(streamClaude({ history: [], question: "pedido de recusa", context: [] })).resolves.toEqual({ kind: "refusal" });
+  });
+});

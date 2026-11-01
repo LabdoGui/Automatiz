@@ -58,10 +58,8 @@ function logFailure(kind: string, status?: number) {
   console.error(`[viva:ai] ${kind}${status ? ` status=${status}` : ""}`);
 }
 
-export async function askClaude(params: { history: readonly AiTurn[]; question: string; context: readonly string[] }): Promise<AiReply> {
+function buildRequest(params: { history: readonly AiTurn[]; question: string; context: readonly string[] }) {
   const { model } = aiSettings();
-  if (!aiSettings().configured) throw new AiUnavailableError("Nenhum provedor de IA está configurado nesta instalação.");
-
   const system: Anthropic.Beta.Messages.BetaTextBlockParam[] = [{ type: "text", text: SYSTEM_PROMPT }];
   if (params.context.length) {
     system.push({
@@ -69,50 +67,79 @@ export async function askClaude(params: { history: readonly AiTurn[]; question: 
       text: `Contexto informado pela pessoa no VIVA (use para personalizar e respeitar restrições):\n${params.context.map((l) => `- ${l}`).join("\n")}`,
     });
   }
+  return {
+    model,
+    max_tokens: 64000,
+    output_config: { effort: "medium" as const },
+    system,
+    messages: toMessages(params.history, params.question),
+    ...(SERVER_FALLBACK_MODELS.has(model) ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {}),
+  };
+}
 
-  let response: Anthropic.Beta.Messages.BetaMessage;
-  try {
-    response = await getClient().beta.messages.create({
-      model,
-      max_tokens: 16000,
-      output_config: { effort: "medium" },
-      system,
-      messages: toMessages(params.history, params.question),
-      ...(SERVER_FALLBACK_MODELS.has(model) ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {}),
-    });
-  } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
-      logFailure("auth", error.status);
-      throw new AiUnavailableError("O assistente com IA está indisponível por um problema de configuração do servidor.");
-    }
-    if (error instanceof Anthropic.NotFoundError || error instanceof Anthropic.BadRequestError) {
-      logFailure("request", error.status);
-      throw new AiUnavailableError("O assistente com IA não aceitou esta pergunta. Tente reformular de forma mais curta.");
-    }
-    if (error instanceof Anthropic.RateLimitError) {
-      logFailure("rate_limit", error.status);
-      throw new AiUnavailableError("O provedor de IA está com muitas solicitações. Tente novamente em alguns minutos.");
-    }
-    if (error instanceof Anthropic.APIConnectionError) {
-      logFailure(error instanceof Anthropic.APIConnectionTimeoutError ? "timeout" : "connection");
-      throw new AiUnavailableError("Não foi possível falar com o provedor de IA agora. Tente novamente em instantes.");
-    }
-    if (error instanceof Anthropic.APIError) {
-      logFailure("api", error.status);
-      throw new AiUnavailableError("O provedor de IA está instável no momento. Tente novamente mais tarde.");
-    }
+function mapError(error: unknown): never {
+  if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
+    logFailure("auth", error.status);
+    throw new AiUnavailableError("O assistente com IA está indisponível por um problema de configuração do servidor.");
+  }
+  if (error instanceof Anthropic.NotFoundError || error instanceof Anthropic.BadRequestError) {
+    logFailure("request", error.status);
+    throw new AiUnavailableError("O assistente com IA não aceitou esta pergunta. Tente reformular de forma mais curta.");
+  }
+  if (error instanceof Anthropic.RateLimitError) {
+    logFailure("rate_limit", error.status);
+    throw new AiUnavailableError("O provedor de IA está com muitas solicitações. Tente novamente em alguns minutos.");
+  }
+  if (error instanceof Anthropic.APIUserAbortError) {
     throw error;
   }
+  if (error instanceof Anthropic.APIConnectionError) {
+    logFailure(error instanceof Anthropic.APIConnectionTimeoutError ? "timeout" : "connection");
+    throw new AiUnavailableError("Não foi possível falar com o provedor de IA agora. Tente novamente em instantes.");
+  }
+  if (error instanceof Anthropic.APIError) {
+    logFailure("api", error.status);
+    throw new AiUnavailableError("O provedor de IA está instável no momento. Tente novamente mais tarde.");
+  }
+  throw error;
+}
 
-  if (response.stop_reason === "refusal") return { kind: "refusal" };
-  const text = response.content
+/**
+ * Pergunta ao Claude transmitindo o texto conforme chega (onText). A resposta
+ * final considera o motivo de parada: recusa não é exibida como resposta.
+ */
+export async function streamClaude(
+  params: { history: readonly AiTurn[]; question: string; context: readonly string[] },
+  onText: (delta: string) => void = () => {},
+  signal?: AbortSignal,
+): Promise<AiReply> {
+  if (!aiSettings().configured) throw new AiUnavailableError("Nenhum provedor de IA está configurado nesta instalação.");
+
+  let message: Anthropic.Beta.Messages.BetaMessage;
+  try {
+    const stream = getClient().beta.messages.stream(buildRequest(params), { signal });
+    for await (const event of stream) {
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") onText(event.delta.text);
+    }
+    message = await stream.finalMessage();
+  } catch (error) {
+    mapError(error);
+  }
+
+  if (message.stop_reason === "refusal") return { kind: "refusal" };
+  const text = message.content
     .filter((b): b is Anthropic.Beta.Messages.BetaTextBlock => b.type === "text")
     .map((b) => b.text)
-    .join("\n\n")
+    .join("")
     .trim();
   if (!text) {
-    logFailure(`empty:${response.stop_reason ?? "unknown"}`);
+    logFailure(`empty:${message.stop_reason ?? "unknown"}`);
     throw new AiUnavailableError("O assistente com IA não conseguiu formular uma resposta. Tente perguntar de outro jeito.");
   }
-  return { kind: "answer", text, truncated: response.stop_reason === "max_tokens" };
+  return { kind: "answer", text, truncated: message.stop_reason === "max_tokens" };
+}
+
+/** Mesma chamada, sem acompanhar o texto parcial. */
+export async function askClaude(params: { history: readonly AiTurn[]; question: string; context: readonly string[] }): Promise<AiReply> {
+  return streamClaude(params);
 }
