@@ -62,7 +62,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
             {MEAL_TYPE_LABEL[m]}
           </Link>
         ))}
-        <Link href={qs(type, !quick)} aria-pressed={quick} className={cn("shrink-0 rounded-full border px-4 py-2 text-sm font-semibold", quick ? "border-lime bg-lime text-lime-ink" : "border-line text-ink-2")}>
+        <Link href={qs(type, !quick)} aria-current={quick ? "true" : undefined} className={cn("shrink-0 rounded-full border px-4 py-2 text-sm font-semibold", quick ? "border-lime bg-lime text-lime-ink" : "border-line text-ink-2")}>
           Até 15 min
         </Link>
       </nav>

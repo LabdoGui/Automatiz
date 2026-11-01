@@ -179,7 +179,7 @@ export default async function PlannerPage({ searchParams }: { searchParams: Prom
                         }`}
                       >
                         <Link href={`/alimentacao/refeicao/${meal.id}`} className="min-w-0 flex-1 rounded-xl">
-                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-ink-3">{MEAL_TYPE_LABEL[meal.mealType]}</p>
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-ink-2">{MEAL_TYPE_LABEL[meal.mealType]}</p>
                           <h3 className="mt-0.5 text-[1.05rem] leading-snug font-bold">{meal.title}</h3>
                           {meal.isFlexible ? (
                             <p className="mt-1 text-sm text-ink-2">Momento livre. Sem registro de nutrientes — e tudo bem.</p>

@@ -13,7 +13,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],
-  globalSetup: "./tests/support/integration-global.ts",
+  globalSetup: "./tests/support/e2e-global.ts",
   use: {
     baseURL: `http://localhost:${PORT}`,
     locale: "pt-BR",
@@ -26,6 +26,15 @@ export default defineConfig({
     url: `http://localhost:${PORT}/entrar`,
     timeout: 600_000,
     reuseExistingServer: !process.env.CI,
-    env: { ...testEnv, NEXT_TELEMETRY_DISABLED: "1" },
+    env: {
+      ...testEnv,
+      NEXT_TELEMETRY_DISABLED: "1",
+      // E-mails vão para o servidor SMTP local aberto pelo setup global.
+      SMTP_HOST: "127.0.0.1",
+      SMTP_PORT: "2525",
+      SMTP_SECURE: "false",
+      SMTP_REQUIRE_TLS: "false",
+      EMAIL_FROM: "VIVA <nao-responda@teste.viva.invalid>",
+    },
   },
 });

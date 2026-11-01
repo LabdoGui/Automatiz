@@ -31,7 +31,7 @@ export function HeatCalendar({ days, label }: { days: HeatDay[]; label: string }
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
   return (
     <figure className="m-0">
-      <div className="relative flex gap-2 overflow-x-auto pb-2" role="group" aria-label={label}>
+      <div className="relative flex gap-2 overflow-x-auto pb-2" role="group" aria-label={label} tabIndex={0}>
         <div className="flex shrink-0 flex-col gap-[3px] pt-0 text-[10px] leading-[18px] text-ink-3" aria-hidden>
           {WEEKDAY_SHORT.map((d, i) => (
             <span key={d} className="h-[18px]">

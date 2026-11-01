@@ -45,10 +45,10 @@ const TIMEZONES = [
 function Row({ label, children, action, id }: { label: string; children: React.ReactNode; action?: React.ReactNode; id?: string }) {
   return (
     <div id={id} className="flex scroll-mt-24 items-start gap-4 py-4">
-      <div className="min-w-0 flex-1">
+      <dl className="min-w-0 flex-1">
         <dt className="text-xs font-bold uppercase tracking-[0.12em] text-ink-3">{label}</dt>
         <dd className="mt-1">{children}</dd>
-      </div>
+      </dl>
       {action}
     </div>
   );
@@ -89,7 +89,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr] [&>*]:min-w-0">
         <div>
           <SectionTitle>Seu perfil</SectionTitle>
-          <dl className="divide-y divide-line border-y border-line">
+          <div className="divide-y divide-line border-y border-line">
             <Row label="Dados pessoais" action={<SectionEditor step="perfil" data={d} label="Dados pessoais" />}>
               {d.displayName}
               <span className="block text-sm text-ink-2">
@@ -156,7 +156,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                 Gerenciar despensa completa
               </Link>
             </Row>
-          </dl>
+          </div>
         </div>
 
         <div className="flex flex-col gap-10">

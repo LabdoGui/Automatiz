@@ -8,7 +8,7 @@ export interface CapturedMail {
 }
 
 /** Servidor SMTP local que apenas guarda as mensagens recebidas (testes). */
-export async function startSmtpSink() {
+export async function startSmtpSink(port = 0, onMail?: (mail: CapturedMail) => void) {
   const mails: CapturedMail[] = [];
   const server = new SMTPServer({
     authOptional: true,
@@ -18,19 +18,20 @@ export async function startSmtpSink() {
       let raw = "";
       stream.on("data", (chunk: Buffer) => (raw += chunk.toString("utf8")));
       stream.on("end", () => {
-        mails.push({
+        const mail = {
           from: session.envelope.mailFrom ? session.envelope.mailFrom.address : "",
           to: session.envelope.rcptTo.map((r) => r.address),
           raw,
-        });
+        };
+        mails.push(mail);
+        onMail?.(mail);
         callback();
       });
     },
   });
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const port = (server.server.address() as AddressInfo).port;
+  await new Promise<void>((resolve) => server.listen(port, "127.0.0.1", resolve));
   return {
-    port,
+    port: (server.server.address() as AddressInfo).port,
     mails,
     close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   };
