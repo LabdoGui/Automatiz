@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
   cacheComponents: false,
   partialPrefetching: false,
   poweredByHeader: false,
+  // Imagem Docker: servidor mínimo autossuficiente (veja Dockerfile).
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
   turbopack: {
     rules: {

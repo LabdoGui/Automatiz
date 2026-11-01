@@ -77,3 +77,12 @@ jobs:
           name: playwright-results
           path: test-results
           retention-days: 7
+
+  imagem:
+    name: Imagem Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build da imagem de produção (sem segredos nem banco)
+        run: docker build --target runner -t viva:ci .

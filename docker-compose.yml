@@ -1,0 +1,48 @@
+# Ambiente completo local (PostgreSQL + migrações/seed + app).
+# Antes: defina BETTER_AUTH_SECRET (ex.: export BETTER_AUTH_SECRET=$(openssl rand -base64 32)).
+# Opcional: um arquivo .env.docker com as demais variáveis (SMTP, VAPID, IA…).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: viva
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-viva_local_password}
+      POSTGRES_DB: viva
+    volumes:
+      - viva-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U viva -d viva"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  migrate:
+    build:
+      context: .
+      target: builder
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed/index.ts"
+    environment:
+      DATABASE_URL: postgresql://viva:${POSTGRES_PASSWORD:-viva_local_password}@db:5432/viva?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: runner
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      DATABASE_URL: postgresql://viva:${POSTGRES_PASSWORD:-viva_local_password}@db:5432/viva?schema=public
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Defina BETTER_AUTH_SECRET (openssl rand -base64 32)}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  viva-pgdata:

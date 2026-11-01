@@ -4,7 +4,17 @@ import { createPrismaClient } from "./prisma-factory";
 
 const globalForPrisma = globalThis as unknown as { vivaPrisma?: PrismaClient };
 
-/** Cliente Prisma único por processo (evita múltiplas conexões em desenvolvimento). */
-export const db: PrismaClient = globalForPrisma.vivaPrisma ?? createPrismaClient();
+function client(): PrismaClient {
+  // Criado no primeiro uso: o build (que importa os módulos) não precisa de DATABASE_URL.
+  if (!globalForPrisma.vivaPrisma) globalForPrisma.vivaPrisma = createPrismaClient();
+  return globalForPrisma.vivaPrisma;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.vivaPrisma = db;
+/** Cliente Prisma único por processo, criado sob demanda. */
+export const db: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const c = client();
+    const value = Reflect.get(c, prop, c);
+    return typeof value === "function" ? value.bind(c) : value;
+  },
+});

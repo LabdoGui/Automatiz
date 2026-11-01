@@ -10,7 +10,8 @@ const isProduction = process.env.NODE_ENV === "production";
 const emailEnabled = emailSettings().configured;
 export const RESET_TOKEN_MINUTES = 60;
 
-if (isProduction && !process.env.BETTER_AUTH_SECRET) {
+// Verificado em tempo de execução (o build importa os módulos sem os segredos do servidor).
+if (isProduction && !process.env.BETTER_AUTH_SECRET && process.env.NEXT_PHASE !== "phase-production-build") {
   throw new Error("BETTER_AUTH_SECRET é obrigatório em produção.");
 }
 
