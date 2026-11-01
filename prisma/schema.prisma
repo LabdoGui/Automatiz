@@ -374,6 +374,8 @@ model Food {
   /// Família para preferências ("banana", "brocolis"...)
   family            String?
   allergenReviewed  Boolean          @default(false)
+  /// Quem revisou os alergênicos e quando (revisão humana; preservada pelo seed)
+  allergenReviewNote String?
   substitutionGroup String?
   /// Alimento comprado (cru) correspondente a este alimento preparado
   purchaseFoodId    String?

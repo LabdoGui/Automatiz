@@ -23,6 +23,7 @@ import { requireUser, userTimezone } from "../session";
 import * as shopping from "../services/shopping";
 import * as prices from "../services/prices";
 import { recordActivity } from "../services/gamification";
+import { configuredPriceProviders, importProviderQuotes } from "../integrations/price-providers";
 
 async function ctx() {
   const user = await requireUser();
@@ -236,3 +237,32 @@ export async function createProductAction(_prev: unknown, formData: FormData): P
     return { ok: true, message: "Produto criado. Informe o preço para usá-lo nas listas." };
   });
 }
+
+/** Busca preços nas integrações configuradas (ex.: Open Prices) para os produtos do catálogo. */
+export async function syncIntegrationPricesAction(_prev: unknown, _formData: FormData): Promise<ActionResult> {
+  return safeAction(async () => {
+    const { user, today } = await ctx();
+    const providers = configuredPriceProviders();
+    if (providers.length === 0) throw new UserFacingError("Nenhuma integração de preços está configurada nesta instalação.");
+    await consumeRateLimit(`price-sync:${user.id}`, 2, 60 * 60);
+    const products = await db.product.findMany({ where: { ownerId: null, catalogKey: { not: null } }, select: { catalogKey: true } });
+    const keys = products.map((p) => p.catalogKey!);
+    let imported = 0;
+    let rejected = 0;
+    for (const provider of providers) {
+      const quotes = await provider.fetchQuotes({ productKeys: keys, signal: AbortSignal.timeout(60_000) });
+      const report = await importProviderQuotes(user.id, provider, quotes, today);
+      imported += report.imported;
+      rejected += report.rejected.length;
+    }
+    revalidatePath("/compras/precos");
+    revalidatePath("/compras");
+    return {
+      ok: true,
+      message: imported
+        ? `${imported} ${imported === 1 ? "preço importado" : "preços importados"} das integrações${rejected ? ` (${rejected} descartados por estarem incompletos ou antigos)` : ""}.`
+        : "Nenhum preço recente encontrado nas integrações para os produtos do catálogo.",
+    };
+  });
+}
+

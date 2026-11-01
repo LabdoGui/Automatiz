@@ -2,6 +2,7 @@ import "server-only";
 import { toDbDate, type ISODate } from "@/domain/dates";
 import { quoteProblem, type ExternalPriceQuote } from "@/domain/pricing/quotes";
 import { db } from "../db";
+import { openPricesProvider } from "./open-prices";
 
 /**
  * Contrato para integrações de preço.
@@ -20,7 +21,7 @@ export interface PriceProvider {
   fetchQuotes(params: { productKeys: readonly string[]; postalCode?: string; signal?: AbortSignal }): Promise<ExternalPriceQuote[]>;
 }
 
-export const PRICE_PROVIDERS: readonly PriceProvider[] = [];
+export const PRICE_PROVIDERS: readonly PriceProvider[] = [openPricesProvider];
 
 export function configuredPriceProviders(): PriceProvider[] {
   return PRICE_PROVIDERS.filter((p) => p.isConfigured());

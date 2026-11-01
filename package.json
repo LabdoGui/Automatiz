@@ -19,7 +19,9 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "check": "npm run typecheck && npm run lint && npm run test",
-    "push:chaves": "node scripts/gerar-chaves-vapid.mjs"
+    "push:chaves": "node scripts/gerar-chaves-vapid.mjs",
+    "alergenos:exportar": "tsx --tsconfig tsconfig.scripts.json scripts/alergenos.ts exportar",
+    "alergenos:importar": "tsx --tsconfig tsconfig.scripts.json scripts/alergenos.ts importar"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

@@ -106,6 +106,8 @@ export async function createCustomFood(
     fatG: number;
     fiberG: number | null;
     tags: string[];
+    /** Código de barras, quando os dados vieram do Open Food Facts */
+    barcode?: string | null;
   },
 ) {
   const count = await db.food.count({ where: { ownerId: userId } });
@@ -125,8 +127,9 @@ export async function createCustomFood(
       fiberG: data.fiberG,
       missingFields: data.fiberG === null ? ["fiberG"] : [],
       tags: data.tags,
-      // Alergênicos informados pelo próprio usuário (ele conhece o rótulo).
+      // Alergênicos confirmados pelo próprio usuário (ele tem o rótulo em mãos).
       allergenReviewed: true,
+      sourceRef: data.barcode ? `Open Food Facts · ${data.barcode} (conferido pelo usuário)` : null,
       dataUpdatedAt: new Date(),
     },
     select: FOOD_SELECT,

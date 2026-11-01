@@ -2,19 +2,17 @@ import type { Metadata } from "next";
 import { Database, Plus, Search, ShieldAlert } from "lucide-react";
 import { formatDec, formatInt } from "@/domain/format";
 import { foodConflicts } from "@/domain/restrictions/engine";
-import { ALLERGENS, labelForTag } from "@/domain/restrictions/vocabulary";
+import { labelForTag } from "@/domain/restrictions/vocabulary";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ActionForm, FormMessage } from "@/components/forms/action-form";
-import { NumberField, SubmitButton, TextField } from "@/components/forms/fields";
-import { ChipCheckbox, ChipGroup } from "@/components/forms/choices";
 import { requireOnboardedUser } from "@/server/session";
 import { db } from "@/server/db";
 import { foodLabel, searchFoods, STATE_LABEL, FOOD_SELECT } from "@/server/services/foods";
 import { plannerContext } from "@/server/services/planner";
-import { createCustomFoodAction } from "@/server/actions/foods";
+import { CustomFoodForm } from "@/components/food/custom-food-form";
+import { openFoodFactsEnabled } from "@/server/integrations/open-food-facts";
 
 export const metadata: Metadata = { title: "Base de alimentos" };
 
@@ -51,24 +49,7 @@ export default async function FoodsPage({ searchParams }: { searchParams: Promis
             triggerLabel="Cadastrar alimento"
             triggerSize="sm"
           >
-            <ActionForm action={createCustomFoodAction} closeDialogOnSuccess className="flex flex-col gap-4">
-              <TextField name="name" label="Nome" maxLength={80} />
-              <TextField name="brand" label="Marca (opcional)" maxLength={60} />
-              <div className="grid grid-cols-2 gap-3">
-                <NumberField name="kcal" label="Energia" decimal suffix="kcal" />
-                <NumberField name="proteinG" label="Proteínas" decimal suffix="g" />
-                <NumberField name="carbsG" label="Carboidratos" decimal suffix="g" />
-                <NumberField name="fatG" label="Gorduras" decimal suffix="g" />
-                <NumberField name="fiberG" label="Fibras (opcional)" decimal suffix="g" />
-              </div>
-              <ChipGroup legend="Contém alergênicos?" hint="Marque conforme o rótulo, incluindo “pode conter”.">
-                {ALLERGENS.map((a) => (
-                  <ChipCheckbox key={a.tag} name="allergens" value={a.tag} label={a.label} tone="danger" />
-                ))}
-              </ChipGroup>
-              <FormMessage>Todos os valores são por 100 g do produto. Se o rótulo mostrar por porção, converta antes.</FormMessage>
-              <SubmitButton block>Salvar alimento</SubmitButton>
-            </ActionForm>
+            <CustomFoodForm barcodeEnabled={openFoodFactsEnabled()} />
           </Dialog>
         }
       />

@@ -40,7 +40,7 @@ export const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
   PAID: "Pago por você",
   IMPORT: "Importado de arquivo",
   DEMO: "Exemplo de demonstração",
-  INTEGRATION: "Confirmado pela integração",
+  INTEGRATION: "Integração externa",
 };
 
 export function visibleProductsWhere(userId: string): Prisma.ProductWhereInput {

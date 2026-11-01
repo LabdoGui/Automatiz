@@ -13,7 +13,7 @@ import { ImportPricesForm } from "@/components/shopping/import-prices";
 import { clockFor, requireOnboardedUser } from "@/server/session";
 import { db } from "@/server/db";
 import { comparablePricePerKg, latestPrices, PRICE_SOURCE_LABEL, PRODUCT_SELECT, visibleProductsWhere } from "@/server/services/prices";
-import { addPriceAction, createProductAction, deletePriceAction } from "@/server/actions/shopping";
+import { addPriceAction, createProductAction, deletePriceAction, syncIntegrationPricesAction } from "@/server/actions/shopping";
 import { configuredPriceProviders } from "@/server/integrations/price-providers";
 
 export const metadata: Metadata = { title: "Preços" };
@@ -100,11 +100,27 @@ export default async function PricesPage({ searchParams }: { searchParams: Promi
           </h2>
           <ImportPricesForm />
         </section>
-        <FormMessage>
-          {providers.length === 0
-            ? "Nenhuma integração de preços está configurada nesta instalação, então nenhum preço é buscado na internet. Quando houver uma fonte autorizada, os valores aparecerão com origem “Confirmado pela integração”, loja e data."
-            : `Integrações configuradas: ${providers.map((p) => p.name).join(", ")}. Preços vindos delas aparecem com origem “Confirmado pela integração”, loja e data.`}
-        </FormMessage>
+        {providers.length === 0 ? (
+          <FormMessage>
+            Nenhuma integração de preços está configurada nesta instalação, então nenhum preço é buscado na internet. Quando houver uma fonte
+            autorizada, os valores aparecerão com origem “integração externa”, loja e data.
+          </FormMessage>
+        ) : (
+          <section aria-labelledby="integracoes" className="rounded-3xl border border-line p-5">
+            <h2 id="integracoes" className="mb-2 text-lg font-bold">
+              Preços da comunidade
+            </h2>
+            <p className="mb-4 text-sm text-ink-2">
+              Busca em {providers.map((p) => p.name).join(", ")} preços recentes (até 30 dias) de hortifrúti a granel, em reais. São preços enviados
+              por outras pessoas, com loja, cidade e data — confira se a loja faz sentido para você. Dados abertos sob licença ODbL.
+            </p>
+            <ActionForm action={syncIntegrationPricesAction}>
+              <SubmitButton variant="secondary" pendingLabel="Buscando preços…">
+                Buscar preços da comunidade
+              </SubmitButton>
+            </ActionForm>
+          </section>
+        )}
       </div>
 
       <form role="search" action="/compras/precos" className="mb-6">

@@ -41,6 +41,11 @@ async function seedFoods() {
   const idByTaco = new Map<number, string>();
   const moistureByTaco = new Map<number, number | null>();
 
+  const humanReviewed = new Set(
+    (
+      await db.food.findMany({ where: { sourceId: source.id, allergenReviewNote: { not: null } }, select: { sourceRef: true } })
+    ).map((r) => r.sourceRef),
+  );
   for (const f of raw.foods) {
     const curated = curatedByTaco.get(f.tacoId);
     const status = nutrientStatus(f);
@@ -80,10 +85,12 @@ async function seedFoods() {
       unitWeightG: curated?.unitWeightG ?? null,
       dataUpdatedAt: TACO_DATA_DATE,
     };
+    // Revisões humanas de alergênicos (scripts/alergenos.ts) não são sobrescritas.
+    const { tags: _tags, allergenReviewed: _reviewed, ...keepReview } = data;
     const food = await db.food.upsert({
       where: { sourceId_sourceRef: { sourceId: source.id, sourceRef: String(f.tacoId) } },
       create: { ...data, sourceId: source.id, sourceRef: String(f.tacoId) },
-      update: data,
+      update: humanReviewed.has(String(f.tacoId)) && !curated ? keepReview : data,
     });
     idByTaco.set(f.tacoId, food.id);
     moistureByTaco.set(f.tacoId, f.moisturePct);

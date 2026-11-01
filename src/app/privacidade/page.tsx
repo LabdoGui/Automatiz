@@ -126,8 +126,13 @@ export default function PrivacyPage() {
           <h2 id="fontes">Fontes de dados</h2>
           <p>
             Informações nutricionais: Tabela Brasileira de Composição de Alimentos (TACO), 4ª edição revisada e ampliada,
-            NEPA/UNICAMP, 2011 — reprodução permitida com citação da fonte. Preços são informados por você ou importados de
-            arquivos que você envia; o VIVA não consulta preços de lojas automaticamente.
+            NEPA/UNICAMP, 2011 — reprodução permitida com citação da fonte. Ao buscar um produto pelo código de barras, só o
+            código é enviado ao Open Food Facts (base colaborativa, licença ODbL), e você confere os dados no rótulo antes de salvar.
+          </p>
+          <p className="mt-3">
+            Preços são informados por você, importados de arquivos que você envia ou, se esta instalação ativar e você pedir,
+            buscados no Open Prices (preços enviados pela comunidade do Open Food Facts, licença ODbL), sempre com loja, cidade e
+            data. Nenhum dado seu é enviado nessas buscas.
           </p>
         </section>
 
