@@ -4,7 +4,6 @@ import { Logo } from "@/components/brand/logo";
 import { RetryButton } from "./retry-button";
 
 export const metadata: Metadata = { title: "Sem conexão" };
-export const dynamic = "force-static";
 
 export default function OfflinePage() {
   return (

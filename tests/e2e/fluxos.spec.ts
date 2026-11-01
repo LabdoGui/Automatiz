@@ -28,9 +28,15 @@ async function continueStep(nextStepLabel: string) {
   await expect(page.getByText(nextStepLabel, { exact: true })).toBeVisible();
 }
 
+const browserProblems: string[] = [];
+
 test.beforeAll(async ({ browser }) => {
   const context = await browser.newContext({ ...test.info().project.use });
   page = await context.newPage();
+  page.on("pageerror", (e) => browserProblems.push(`erro na página: ${e.message}`));
+  page.on("console", (m) => {
+    if (m.type() === "error" || /Content Security Policy|Refused to/i.test(m.text())) browserProblems.push(`console: ${m.text()}`);
+  });
 });
 
 test.afterAll(async () => {
@@ -186,4 +192,8 @@ test("12. sair da conta e entrar novamente", async () => {
   await page.locator("button[type=submit]").click();
   await expect(page).toHaveURL(/\/inicio/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Teste E2E");
+});
+
+test("sem erros no navegador nem violações de CSP durante os fluxos", async () => {
+  expect(browserProblems).toEqual([]);
 });

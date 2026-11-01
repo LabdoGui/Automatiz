@@ -9,6 +9,9 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Ignorado pelos navegadores em HTTP; em produção (HTTPS) força conexões seguras.
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  // A Content-Security-Policy (com nonce por requisição) é definida em src/proxy.ts.
 ];
 
 const nextConfig: NextConfig = {
