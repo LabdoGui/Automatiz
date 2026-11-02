@@ -1,0 +1,38 @@
+# Render (plano gratuito): o VIVA como serviço web Node, com PostgreSQL externo
+# (ex.: Supabase). No painel do Render: New → Blueprint → escolha o repositório.
+# Os valores marcados com "sync: false" são pedidos na criação e ficam só no
+# Render — nunca no repositório.
+#
+# DATABASE_URL         → conexão do app (no Supabase: pooler, porta 6543)
+# MIGRATE_DATABASE_URL → conexão das migrações (no Supabase: pooler, porta 5432)
+#
+# O plano gratuito "dorme" após 15 min sem acesso; a primeira visita depois
+# disso leva cerca de 1 minuto.
+services:
+  - type: web
+    name: viva
+    runtime: node
+    plan: free
+    region: virginia
+    branch: claude/relaxed-lovelace-2vgk0n
+    buildCommand: >-
+      npm ci &&
+      DATABASE_URL="$MIGRATE_DATABASE_URL" npx prisma migrate deploy &&
+      npx tsx prisma/seed/index.ts &&
+      npm run build
+    startCommand: BETTER_AUTH_URL="${BETTER_AUTH_URL:-$RENDER_EXTERNAL_URL}" npx next start -p "$PORT"
+    healthCheckPath: /api/saude
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
+      - key: MIGRATE_DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+      - key: VIVA_OPEN_PRICES
+        value: "on"

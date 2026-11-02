@@ -301,6 +301,8 @@ O VIVA é um app Next.js padrão com PostgreSQL; qualquer plataforma Node serve.
 
 Em Vercel: conecte o repositório, defina as variáveis, use um PostgreSQL externo (Neon, Supabase, RDS…) e rode `npm run db:migrate` como etapa de build ou manualmente antes de promover a versão. Com Supabase, use o *pooler* (Supavisor): porta 6543 (modo transação) em `DATABASE_URL` para o app e porta 5432 (modo sessão) para `prisma migrate deploy`, que precisa de *advisory locks*. Para isolar o VIVA de outras tabelas do mesmo banco, use um schema próprio fora da Data API (ex.: `?schema=viva`) com um usuário dono dele e `ALTER ROLE … SET search_path = viva` (as consultas SQL diretas da gamificação usam o `search_path`). Em servidor próprio ou qualquer plataforma de contêineres, use a imagem do `Dockerfile`.
 
+**Render (gratuito):** o `render.yaml` descreve o serviço (New → Blueprint no painel). Informe `DATABASE_URL` e `MIGRATE_DATABASE_URL` na criação; o segredo de autenticação é gerado pelo Render e a URL pública vem de `RENDER_EXTERNAL_URL`. As migrações e o catálogo rodam no build. O plano gratuito dorme após 15 minutos sem acesso.
+
 **Lembretes por notificação push:** gere as chaves com `npm run push:chaves`, configure `VAPID_*` e `CRON_SECRET` no servidor e agende uma chamada a `/api/cron/lembretes` a cada 15 minutos. Opções gratuitas: o workflow `.github/workflows/lembretes.yml` (defina os segredos `VIVA_URL` e `CRON_SECRET` no repositório; agendamentos rodam só no branch padrão), um cron do servidor ou o Vercel Cron (confira o limite de frequência do seu plano).
 
 ## Integrações externas e requisitos
