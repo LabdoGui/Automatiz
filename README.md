@@ -4,10 +4,21 @@ Aplicativo web (PWA) em português do Brasil para **planejar a alimentação da 
 
 > Status: versão completa de desenvolvimento, verificada com typecheck, lint, testes unitários, de integração, ponta a ponta e de acessibilidade (axe), CI no GitHub Actions e imagem Docker testada (veja [Como rodar testes](#como-rodar-testes)). Ainda **não** passou por um deploy público, revisão jurídica nem auditoria externa de segurança/acessibilidade — veja [Limitações conhecidas](#limitações-conhecidas).
 
+## Telas
+
+Capturas do app rodando com a conta de demonstração (`npm run db:seed:demo`), em tamanho de celular. Os preços da conta demo são exemplos, não preços de mercado.
+
+<table>
+  <tr><td align="center"><img src="docs/telas/00-boas-vindas.png" width="240" alt="Tela Boas-vindas"><br><sub>Boas-vindas</sub></td><td align="center"><img src="docs/telas/01-inicio.png" width="240" alt="Tela Início do dia"><br><sub>Início do dia</sub></td><td align="center"><img src="docs/telas/02-alimentacao.png" width="240" alt="Tela Plano da semana"><br><sub>Plano da semana</sub></td></tr>
+  <tr><td align="center"><img src="docs/telas/03-compras.png" width="240" alt="Tela Lista de compras"><br><sub>Lista de compras</sub></td><td align="center"><img src="docs/telas/04-treino.png" width="240" alt="Tela Treino A/B"><br><sub>Treino A/B</sub></td><td align="center"><img src="docs/telas/05-progresso.png" width="240" alt="Tela Progresso"><br><sub>Progresso</sub></td></tr>
+  <tr><td align="center"><img src="docs/telas/06-conquistas.png" width="240" alt="Tela Conquistas"><br><sub>Conquistas</sub></td><td align="center"><img src="docs/telas/07-assistente.png" width="240" alt="Tela Assistente"><br><sub>Assistente</sub></td><td align="center"><img src="docs/telas/08-perfil.png" width="240" alt="Tela Perfil e privacidade"><br><sub>Perfil e privacidade</sub></td></tr>
+</table>
+
 ---
 
 ## Sumário
 
+- [Telas](#telas)
 - [Problema que resolve](#problema-que-resolve)
 - [Funcionalidades implementadas](#funcionalidades-implementadas)
 - [Tecnologias utilizadas](#tecnologias-utilizadas)
